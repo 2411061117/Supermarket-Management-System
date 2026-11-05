@@ -1,0 +1,18 @@
+.login-card { max-width: 400px; }
+
+.sidebar { width: 230px; }
+@media (min-width: 992px) {
+    .sidebar { min-height: calc(100vh - 56px); position: sticky; top: 56px; align-self: flex-start; }
+}
+.sidebar .nav-link { color: var(--bs-body-color); }
+.sidebar .nav-link.active { background-color: var(--bs-success); color: #fff; }
+
+.min-vw-0 { min-width: 0; }   /* để bảng responsive không tràn ngang */
+
+.stat-card { border-left: 4px solid var(--bs-success) !important; }
+
+/* In hóa đơn (dùng ở tuần 4) */
+@media print {
+    .navbar, .sidebar, .no-print { display: none !important; }
+    main { padding: 0 !important; }
+}

@@ -1,0 +1,7 @@
+Options -Indexes
+RewriteEngine On
+
+# File/thư mục thật (css, js, ảnh) thì trả về trực tiếp
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

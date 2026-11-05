@@ -1,0 +1,5 @@
+# Khi đặt cả dự án trong htdocs: chặn truy cập trực tiếp mã nguồn/cấu hình/CSDL
+# và chuyển trang gốc sang thư mục public/.
+RewriteEngine On
+RewriteRule ^(app|config|database|docs)(/|$) - [F,L]
+RewriteRule ^$ public/ [R=302,L]
