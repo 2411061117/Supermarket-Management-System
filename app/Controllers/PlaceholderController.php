@@ -11,8 +11,6 @@ class PlaceholderController extends Controller
 {
     private const MODULES = [
         'products'   => ['Sản phẩm', 'Tuần 2'],
-        'categories' => ['Loại hàng', 'Tuần 2'],
-        'units'      => ['Đơn vị tính', 'Tuần 2'],
         'suppliers'  => ['Nhà cung cấp', 'Tuần 2'],
         'users'     => ['Quản lý tài khoản nhân viên', 'Tuần 2'],
         'inventory' => ['Nhập kho & tồn kho', 'Tuần 3'],
@@ -21,8 +19,6 @@ class PlaceholderController extends Controller
     ];
 
     public function products(): void   { $this->show('products'); }
-    public function categories(): void { $this->show('categories'); }
-    public function units(): void      { $this->show('units'); }
     public function suppliers(): void  { $this->show('suppliers'); }
     public function users(): void     { $this->show('users'); }
     public function inventory(): void { $this->show('inventory'); }
