@@ -14,6 +14,7 @@ use App\Controllers\PlaceholderController;
 use App\Controllers\ProductController;
 use App\Controllers\SupplierController;
 use App\Controllers\UnitController;
+use App\Controllers\UserController;
 
 // Xác thực
 $router->get('/login',  [AuthController::class, 'showLogin'], null);
@@ -61,8 +62,15 @@ $router->post('/products/{id}',           [ProductController::class, 'update'], 
 $router->post('/products/{id}/toggle',    [ProductController::class, 'toggle'],  ['admin']);
 $router->post('/products/{id}/delete',    [ProductController::class, 'destroy'], ['admin']);
 
-// Chưa làm – trang tạm, thay dần bằng controller thật (thay PlaceholderController)
-$router->get('/users',     [PlaceholderController::class, 'users'],     ['admin']);
+// Nhân viên (khóa/mở khóa qua /toggle, không xóa)
+$router->get('/users',                [UserController::class, 'index'],  ['admin']);
+$router->get('/users/create',         [UserController::class, 'create'], ['admin']);
+$router->post('/users',               [UserController::class, 'store'],  ['admin']);
+$router->get('/users/{id}/edit',      [UserController::class, 'edit'],   ['admin']);
+$router->post('/users/{id}',          [UserController::class, 'update'], ['admin']);
+$router->post('/users/{id}/toggle',   [UserController::class, 'toggle'], ['admin']);
+
+// Chưa làm (Tuần 3–4) – trang tạm, thay dần bằng controller thật
 $router->get('/inventory', [PlaceholderController::class, 'inventory'], ['admin', 'warehouse']);
 $router->get('/pos',       [PlaceholderController::class, 'pos'],       ['admin', 'cashier']);
 $router->get('/reports',   [PlaceholderController::class, 'reports'],   ['admin']);

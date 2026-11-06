@@ -12,17 +12,17 @@ Bài thực hành môn Phát triển phần mềm trên nền web — PHP 8 thu�
 ### Tài khoản mẫu (mật khẩu `123456`)
 | Username | Vai trò | Được vào |
 |---|---|---|
-| `admin` | Quản lý | Tất cả |
+| `admin` | Quản lý | Tất cả (kể cả Loại hàng, ĐVT, NCC, Sản phẩm, Nhân viên) |
 | `thungan1` | Thu ngân | Tổng quan, POS |
 | `kho1` | NV kho | Tổng quan, Kho hàng |
 
 ## Cấu trúc
 ```
 public/          Front controller (index.php), .htaccess, assets
-app/Core/        Router, Database (PDO), Model, Controller, View, Auth, Session, Csrf
+app/Core/        Router, Database (PDO), Model, Controller, View, Auth, Session, Csrf, Validator, Paginator, Uploader
 app/Controllers/ Xử lý request
 app/Models/      Truy vấn CSDL (prepared statements)
-app/Views/       Giao diện (layouts/, auth/, dashboard/, errors/)
+app/Views/       Giao diện (layouts/, partials/, auth/, dashboard/, errors/, units/, categories/, suppliers/, products/, users/)
 config/          config.php, routes.php (khai báo route + vai trò)
 database/        schema.sql, seed.sql
 docs/            Tài liệu phân tích thiết kế, test case
@@ -36,6 +36,6 @@ docs/            Tài liệu phân tích thiết kế, test case
 
 ## Tiến độ
 - [x] Tuần 1: Khung MVC, CSDL, đăng nhập, phân quyền, dashboard
-- [ ] Tuần 2: CRUD danh mục, ĐVT, nhà cung cấp, sản phẩm, tài khoản
+- [x] Tuần 2: CRUD loại hàng, ĐVT, nhà cung cấp, sản phẩm (upload ảnh, API tìm kiếm), tài khoản nhân viên
 - [ ] Tuần 3: Nhập kho theo lô/HSD, tồn kho, cảnh báo, mở ca
 - [ ] Tuần 4: POS (FEFO, thanh toán, in hóa đơn), đóng ca, báo cáo

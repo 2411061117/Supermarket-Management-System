@@ -113,3 +113,33 @@
 | 30 | Xóa input `_csrf` (kể cả form upload multipart) hoặc dùng token sai | Trang lỗi **419**, không đổi dữ liệu, không sinh file |
 | 31 | `kho1` / `thungan1` vào `/products`, `/products/create`, `/products/1/edit`; POST thêm/sửa/ngừng bán/xóa | **403**, dữ liệu không đổi; menu không có "Sản phẩm" |
 | 32 | `kho1` / `thungan1` gọi `/products/search?q=coca`; chưa đăng nhập gọi cùng URL | Hai vai trò này nhận JSON bình thường (cho POS và nhập kho); chưa đăng nhập bị chuyển về `/login` |
+
+## Tuần 2 — Nhân viên (`/users`)
+
+Tài khoản đăng nhập: `admin` / `123456`. Toàn bộ chức năng chỉ dành cho admin.
+
+| # | Thao tác | Kết quả mong đợi |
+|---|----------|------------------|
+| 1 | Danh sách | Hiện 3 nhân viên seed, vai trò dạng nhãn màu, trạng thái, lần đăng nhập cuối (hoặc "Chưa đăng nhập"), nhãn "Bạn" ở dòng của mình; không lộ mật khẩu/hash |
+| 2 | Tìm theo username / họ tên / SĐT / email; không phân biệt hoa thường; `%`, `_`, `' OR 1=1 --`, `<script>` | Tìm đúng; `%` `_` coi là ký tự thường; không lỗi SQL, không chạy script |
+| 3 | Lọc theo vai trò, trạng thái; giá trị lạ (`role_id=abc`, `status=bogus`, dạng mảng) | Lọc đúng; giá trị lạ coi như không lọc, không warning |
+| 4 | Thêm hợp lệ (username ` NV_Test1 `, SĐT `0912 345 678`) | Username lưu `nv_test1`, SĐT `0912345678`, mật khẩu lưu bcrypt (`$2y$…`), nhân viên đăng nhập được bằng mật khẩu đó |
+| 5 | Thêm chỉ với trường bắt buộc | phone/email lưu `NULL` |
+| 6 | Username: trống, 2 ký tự, 51 ký tự, có dấu cách/gạch ngang/chữ có dấu, kiểu SQLi, trùng (kể cả `ADMIN`) | Báo lỗi đúng từng trường hợp, không lưu; biên 3 và 50 ký tự được chấp nhận |
+| 7 | Họ tên trống/101 ký tự; vai trò trống/không tồn tại/là chữ; SĐT, email sai | Báo lỗi, không lưu |
+| 8 | Mật khẩu: trống, 5 ký tự, 73 ký tự, xác nhận không khớp/trống | Báo lỗi; biên 6 và 72 ký tự được chấp nhận |
+| 9 | Form lỗi | Giữ lại dữ liệu đã nhập (đã escape), **không** in lại mật khẩu |
+| 10 | Sửa: gửi kèm `username=hacked`, để trống mật khẩu | Username không đổi; mật khẩu cũ vẫn dùng được; email trống → `NULL` |
+| 11 | Sửa: đặt lại mật khẩu (mới < 6, không khớp, bỏ trống xác nhận, hợp lệ) | 3 trường hợp đầu báo lỗi, không đổi gì; hợp lệ thì mật khẩu cũ hết hiệu lực, mật khẩu mới đăng nhập được |
+| 12 | Gửi form sửa **không có** trường mật khẩu | Mật khẩu giữ nguyên (không bị ghi đè bằng hash rỗng) |
+| 13 | Sửa chính mình, cố gửi `role_id` khác | Ô vai trò bị khóa; vai trò vẫn giữ nguyên; họ tên mới hiện ngay trên menu |
+| 14 | Admin đổi vai trò nhân viên đang đăng nhập | Có hiệu lực ngay ở request kế tiếp, không cần đăng nhập lại |
+| 15 | Khóa nhân viên đang đăng nhập | Request kế tiếp bị chuyển `/login` kèm 1 thông báo "tài khoản đã bị khóa"; đăng nhập mới bị từ chối bằng thông báo chung |
+| 16 | Mở khóa | Đăng nhập lại được; flash "Đã mở khóa" |
+| 17 | Tự khóa chính mình | Bị chặn, báo "không thể tự khóa tài khoản của chính mình" |
+| 18 | Tài khoản bị xóa khỏi DB khi đang đăng nhập | Bị chuyển `/login` ngay |
+| 19 | Phân trang với 24 nhân viên; `page=999/0/-3/abc`; tìm + lọc + trang 2 | 10 dòng/trang, trang cuối 4 dòng, page sai được kẹp, link giữ `q` và `role_id` |
+| 20 | `/users/abc/edit`, `/users/99999/edit`, GET `/users/{id}/toggle` | **404** |
+| 21 | Thiếu hoặc sai `_csrf` khi thêm/sửa/khóa | **419**, không đổi dữ liệu |
+| 22 | `kho1` / `thungan1` vào mọi route `/users*` và POST thêm/sửa/khóa (cố tạo admin, đặt lại mật khẩu admin) | **403**, dữ liệu không đổi; menu không có "Nhân viên" |
+| 23 | Hồi quy đăng nhập: sai mật khẩu, tài khoản không tồn tại, SQLi, đăng xuất | Báo lỗi chung / bị từ chối; sau đăng xuất vào `/users` bị chuyển `/login` |
