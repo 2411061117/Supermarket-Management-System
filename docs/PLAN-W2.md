@@ -77,4 +77,4 @@ Bước 1–3 độc lập, có thể đảo thứ tự. Bước 4 bắt buộc 
 
 ## Tiến độ
 - [x] Bước 0
-- [ ] Bước 1 · [ ] Bước 2 · [ ] Bước 3 · [ ] Bước 4 · [ ] Bước 5 · [ ] Bước 6
+- [x] Bước 1 · [x] Bước 2 · [x] Bước 3 · [x] Bước 4 · [ ] Bước 5 · [ ] Bước 6
