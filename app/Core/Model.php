@@ -14,6 +14,15 @@ abstract class Model
         $this->db = Database::connection();
     }
 
+    /**
+     * Chuỗi dùng cho LIKE ? ESCAPE '!' : thoát % _ ! để người dùng gõ ký tự đó thì tìm đúng ký tự đó.
+     *   WHERE name LIKE ? ESCAPE '!'   với tham số self::likePattern($q)
+     */
+    protected static function likePattern(string $q): string
+    {
+        return '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $q) . '%';
+    }
+
     public function find(int $id): ?array
     {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = ?");

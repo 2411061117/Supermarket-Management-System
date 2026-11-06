@@ -9,7 +9,7 @@ namespace App\Core;
  *   ], ['name' => 'Tên đơn vị', 'price' => 'Giá bán']);
  *   if ($v->fails()) { $v->errors(); }
  *
- * Rule: required, min, max, numeric, integer, email, phone, alpha_dash, in, same, unique, exists.
+ * Rule: required, min, max, numeric, integer, digits, email, phone, alpha_dash, in, same, unique, exists.
  * - Giá trị rỗng và không có `required` -> bỏ qua các rule còn lại (trường tùy chọn).
  * - min/max: với số (có rule numeric/integer) so sánh giá trị, còn lại so sánh độ dài chuỗi.
  */
@@ -85,6 +85,9 @@ class Validator
 
             case 'integer':
                 return preg_match('/^-?\d+$/', $str) ? null : "$label phải là số nguyên.";
+
+            case 'digits':
+                return preg_match('/^\d+$/', $str) ? null : "$label chỉ gồm chữ số.";
 
             case 'email':
                 return filter_var($str, FILTER_VALIDATE_EMAIL) ? null : "$label không đúng định dạng email.";

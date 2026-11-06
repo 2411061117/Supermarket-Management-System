@@ -11,6 +11,8 @@ use App\Controllers\AuthController;
 use App\Controllers\CategoryController;
 use App\Controllers\DashboardController;
 use App\Controllers\PlaceholderController;
+use App\Controllers\ProductController;
+use App\Controllers\SupplierController;
 use App\Controllers\UnitController;
 
 // Xác thực
@@ -38,9 +40,28 @@ $router->get('/units/{id}/edit',      [UnitController::class, 'edit'],    ['admi
 $router->post('/units/{id}',          [UnitController::class, 'update'],  ['admin']);
 $router->post('/units/{id}/delete',   [UnitController::class, 'destroy'], ['admin']);
 
+// Nhà cung cấp (xóa nếu chưa có phiếu nhập, nếu không thì "ngừng hợp tác" qua /toggle)
+$router->get('/suppliers',                [SupplierController::class, 'index'],   ['admin']);
+$router->get('/suppliers/create',         [SupplierController::class, 'create'],  ['admin']);
+$router->post('/suppliers',               [SupplierController::class, 'store'],   ['admin']);
+$router->get('/suppliers/{id}/edit',      [SupplierController::class, 'edit'],    ['admin']);
+$router->post('/suppliers/{id}',          [SupplierController::class, 'update'],  ['admin']);
+$router->post('/suppliers/{id}/toggle',   [SupplierController::class, 'toggle'],  ['admin']);
+$router->post('/suppliers/{id}/delete',   [SupplierController::class, 'destroy'], ['admin']);
+
+// Sản phẩm (xóa nếu chưa có lô hàng, nếu không thì "ngừng bán" qua /toggle)
+// /products/search trả JSON cho POS (tuần 4) và form nhập kho (tuần 3) nên mở cho cả thu ngân và NV kho.
+// Phải khai báo trước /products/{id}/... để không bị nhầm "search" là {id}.
+$router->get('/products/search',          [ProductController::class, 'search'],  ['admin', 'cashier', 'warehouse']);
+$router->get('/products',                 [ProductController::class, 'index'],   ['admin']);
+$router->get('/products/create',          [ProductController::class, 'create'],  ['admin']);
+$router->post('/products',                [ProductController::class, 'store'],   ['admin']);
+$router->get('/products/{id}/edit',       [ProductController::class, 'edit'],    ['admin']);
+$router->post('/products/{id}',           [ProductController::class, 'update'],  ['admin']);
+$router->post('/products/{id}/toggle',    [ProductController::class, 'toggle'],  ['admin']);
+$router->post('/products/{id}/delete',    [ProductController::class, 'destroy'], ['admin']);
+
 // Chưa làm – trang tạm, thay dần bằng controller thật (thay PlaceholderController)
-$router->get('/products',  [PlaceholderController::class, 'products'],  ['admin']);
-$router->get('/suppliers', [PlaceholderController::class, 'suppliers'], ['admin']);
 $router->get('/users',     [PlaceholderController::class, 'users'],     ['admin']);
 $router->get('/inventory', [PlaceholderController::class, 'inventory'], ['admin', 'warehouse']);
 $router->get('/pos',       [PlaceholderController::class, 'pos'],       ['admin', 'cashier']);
