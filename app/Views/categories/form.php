@@ -24,7 +24,7 @@ $action = $category ? url("/categories/{$category['id']}") : url('/categories');
                 'help'  => 'Không bắt buộc, tối đa 255 ký tự.',
             ]) ?>
             <div class="d-flex gap-2">
-                <button class="btn btn-success"><i class="bi bi-check-lg"></i> Lưu</button>
+                <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Lưu</button>
                 <a href="<?= url('/categories') ?>" class="btn btn-outline-secondary">Hủy</a>
             </div>
         </form>
