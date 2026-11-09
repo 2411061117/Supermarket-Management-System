@@ -4,7 +4,7 @@ $action = $category ? url("/categories/{$category['id']}") : url('/categories');
 ?>
 <h1 class="h4 mb-3"><?= e($title) ?></h1>
 
-<div class="card border-0 shadow-sm" style="max-width: 520px">
+<div class="card border-0 shadow-sm mx-auto" style="max-width: 520px">
     <div class="card-body">
         <form method="post" action="<?= $action ?>" novalidate>
             <?= csrf_field() ?>
