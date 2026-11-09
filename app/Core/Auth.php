@@ -18,7 +18,7 @@ class Auth
             return false;
         }
 
-        session_regenerate_id(true);   // chống session fixation
+        session_regenerate_id(true);   // chống session fixationn
         self::$loaded = false;
         Session::set('user', [
             'id'        => (int) $user['id'],
