@@ -9,7 +9,11 @@ $user = Auth::user();
 $menu = [
     ['/',          'speedometer2', 'Tổng quan',     ['admin', 'cashier', 'warehouse']],
     ['/pos',       'cart3',        'Bán hàng (POS)', ['admin', 'cashier']],
-    ['/inventory', 'box-seam',     'Kho hàng',       ['admin', 'warehouse']],
+    ['/shifts',    'clock-history', 'Ca làm việc',   ['admin', 'cashier']],
+    ['#warehouse', 'box-seam',     'Kho hàng',       ['admin', 'warehouse'], [
+        ['/inventory', 'Tồn kho'],
+        ['/receipts',  'Phiếu nhập'],
+    ]],
     ['/products',  'tags',         'Sản phẩm',       ['admin']],
     ['#catalog',   'folder2-open', 'Danh mục',       ['admin'], [
         ['/categories', 'Loại hàng'],

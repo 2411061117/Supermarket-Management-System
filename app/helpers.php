@@ -2,6 +2,7 @@
 use App\Core\App;
 use App\Core\Csrf;
 use App\Core\Session;
+use App\Core\Validator;
 use App\Core\View;
 
 /** Escape HTML – dùng cho MỌI dữ liệu xuất ra view (chống XSS). */
@@ -36,7 +37,9 @@ function csrf_field(): string
 function old(string $field, mixed $default = ''): mixed
 {
     $old = Session::old();
-    return array_key_exists($field, $old) ? $old[$field] : $default;
+    $missing = new \stdClass();
+    $value = Validator::get($old, $field, $missing);   // hỗ trợ 'items.0.qty'
+    return $value === $missing ? $default : $value;
 }
 
 /** Thông báo lỗi validate của 1 trường ('' nếu không lỗi). */

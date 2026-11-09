@@ -38,7 +38,8 @@
 <div class="row g-3">
     <div class="col-12 col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold">Tồn kho thấp</div>
+            <div class="card-header bg-white fw-semibold">Tồn kho thấp<?php if (App\Core\Auth::hasRole('admin', 'warehouse')): ?>
+                <a href="<?= url('/inventory?status=low') ?>" class="float-end small fw-normal">Xem tồn kho</a><?php endif; ?></div>
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0 align-middle">
                     <thead><tr><th>SKU</th><th>Sản phẩm</th><th class="text-end">Tồn</th><th class="text-end">Tối thiểu</th></tr></thead>

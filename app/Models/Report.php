@@ -26,13 +26,14 @@ class Report
         return (int) $stmt->fetchColumn();
     }
 
-    /** Sản phẩm có tổng tồn (các lô) <= mức tồn tối thiểu. */
+    /** Sản phẩm đang bán có tồn bán được (chỉ tính lô còn hạn) <= mức tồn tối thiểu. */
     public function lowStockProducts(int $storeId): array
     {
         $stmt = Database::connection()->prepare(
             'SELECT p.id, p.sku, p.name, p.min_stock, COALESCE(SUM(b.qty_remaining), 0) AS stock
                FROM products p
           LEFT JOIN product_batches b ON b.product_id = p.id AND b.store_id = ?
+                      AND (b.expiry_date IS NULL OR b.expiry_date >= CURDATE())
               WHERE p.is_active = 1
            GROUP BY p.id, p.sku, p.name, p.min_stock
              HAVING stock <= p.min_stock

@@ -28,7 +28,7 @@ abstract class Controller
         }
         $data = [];
         foreach (array_keys($rules) as $field) {
-            $value = $_POST[$field] ?? null;
+            $value = Validator::get($_POST, $field);
             $data[$field] = is_string($value) ? trim($value) : $value;
         }
         return $data;
