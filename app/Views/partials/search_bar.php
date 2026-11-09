@@ -25,7 +25,7 @@ $filtered = $q !== '' || array_filter($selects, fn($s) => ($s[2] ?? '') !== '') 
             <?php endforeach; ?>
         </select>
     <?php endforeach; ?>
-    <button class="btn btn-outline-primary" aria-label="Tìm"><i class="bi bi-search"></i></button>
+    <button class="btn btn-outline-success" aria-label="Tìm"><i class="bi bi-search"></i></button>
     <?php if ($filtered): ?>
         <a href="<?= e($action) ?>" class="btn btn-outline-secondary text-nowrap">Xóa lọc</a>
     <?php endif; ?>

@@ -49,7 +49,7 @@ $action = $supplier ? url("/suppliers/{$supplier['id']}") : url('/suppliers');
                 'attrs' => 'maxlength="255"',
             ]) ?>
             <div class="d-flex gap-2">
-                <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Lưu</button>
+                <button class="btn btn-success"><i class="bi bi-check-lg"></i> Lưu</button>
                 <a href="<?= url('/suppliers') ?>" class="btn btn-outline-secondary">Hủy</a>
             </div>
         </form>
