@@ -26,31 +26,35 @@ $menu = [
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($title ?? '') ?> · <?= e(App::config('app.name')) ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap&subset=vietnamese">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
 </head>
-<body class="bg-body-tertiary">
-<nav class="navbar navbar-dark bg-success sticky-top px-3">
-    <button class="btn btn-outline-light d-lg-none me-2" type="button"
+<body>
+<nav class="topbar navbar sticky-top px-3 px-lg-4">
+    <button class="btn-icon d-lg-none me-2" type="button"
             data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Mở menu">
-        <i class="bi bi-list"></i>
+        <i class="bi bi-list fs-5"></i>
     </button>
-    <a class="navbar-brand fw-semibold me-auto" href="<?= url('/') ?>">
-        <i class="bi bi-shop"></i> <?= e(App::config('app.name')) ?>
+    <a class="brand-logo me-auto" href="<?= url('/') ?>">
+        <span class="logo-mark"><i class="bi bi-shop"></i></span>
+        <?= e(App::config('app.name')) ?>
     </a>
     <div class="dropdown">
-        <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-            <i class="bi bi-person-circle"></i>
+        <button class="user-chip dropdown-toggle border" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="avatar"><?= e(mb_substr($user['full_name'], 0, 1)) ?></span>
             <span class="d-none d-sm-inline"><?= e($user['full_name']) ?></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
-            <li><span class="dropdown-item-text small text-muted"><?= e($user['role_name']) ?></span></li>
+            <li><span class="dropdown-item-text small text-muted"><i class="bi bi-patch-check-fill text-primary"></i> <?= e($user['role_name']) ?></span></li>
             <li><hr class="dropdown-divider"></li>
             <li>
                 <form method="post" action="<?= url('/logout') ?>">
                     <?= csrf_field() ?>
-                    <button class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
+                    <button class="dropdown-item text-danger"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
                 </form>
             </li>
         </ul>
@@ -58,7 +62,7 @@ $menu = [
 </nav>
 
 <div class="d-flex">
-    <aside class="offcanvas-lg offcanvas-start sidebar bg-white border-end" id="sidebar" tabindex="-1">
+    <aside class="offcanvas-lg offcanvas-start sidebar" id="sidebar" tabindex="-1">
         <div class="offcanvas-header d-lg-none">
             <h5 class="offcanvas-title">Menu</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"></button>
@@ -74,11 +78,11 @@ $menu = [
                 ?>
                 <?php if ($children): ?>
                     <?php $open = array_filter($children, fn($c) => active($c[0]) !== ''); ?>
-                    <a class="nav-link d-flex justify-content-between align-items-center <?= $open ? 'fw-semibold text-success' : '' ?>"
+                    <a class="nav-link d-flex justify-content-between align-items-center <?= $open ? 'text-primary' : '' ?>"
                        data-bs-toggle="collapse" href="#menu-group-<?= $i ?>" role="button"
                        aria-expanded="<?= $open ? 'true' : 'false' ?>" aria-controls="menu-group-<?= $i ?>">
                         <span><i class="bi bi-<?= $icon ?> me-2"></i><?= e($label) ?></span>
-                        <i class="bi bi-chevron-down small"></i>
+                        <i class="bi bi-chevron-down chev"></i>
                     </a>
                     <div class="collapse <?= $open ? 'show' : '' ?>" id="menu-group-<?= $i ?>">
                         <div class="nav flex-column ms-3">
@@ -98,7 +102,7 @@ $menu = [
         </nav>
     </aside>
 
-    <main class="flex-grow-1 p-3 p-md-4 min-vw-0">
+    <main class="flex-grow-1 p-3 p-md-4 p-xl-5 min-vw-0">
         <?php foreach (Session::pullFlash() as $f): ?>
             <div class="alert alert-<?= e($f['type']) ?> alert-dismissible fade show">
                 <?= e($f['message']) ?>
