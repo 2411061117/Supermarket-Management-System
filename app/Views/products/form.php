@@ -111,7 +111,7 @@ $action = $product ? url("/products/{$product['id']}") : url('/products');
             </div>
 
             <div class="d-flex gap-2">
-                <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Lưu</button>
+                <button class="btn btn-success"><i class="bi bi-check-lg"></i> Lưu</button>
                 <a href="<?= url('/products') ?>" class="btn btn-outline-secondary">Hủy</a>
             </div>
         </form>

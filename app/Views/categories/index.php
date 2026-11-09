@@ -1,6 +1,6 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h4 mb-0">Loại hàng</h1>
-    <a href="<?= url('/categories/create') ?>" class="btn btn-primary">
+    <a href="<?= url('/categories/create') ?>" class="btn btn-success">
         <i class="bi bi-plus-lg"></i> Thêm loại hàng
     </a>
 </div>

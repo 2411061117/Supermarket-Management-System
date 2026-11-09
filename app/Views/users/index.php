@@ -3,7 +3,7 @@ $roleBadge = ['admin' => 'text-bg-primary', 'cashier' => 'text-bg-info', 'wareho
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h4 mb-0">Nhân viên</h1>
-    <a href="<?= url('/users/create') ?>" class="btn btn-primary">
+    <a href="<?= url('/users/create') ?>" class="btn btn-success">
         <i class="bi bi-plus-lg"></i> Thêm nhân viên
     </a>
 </div>

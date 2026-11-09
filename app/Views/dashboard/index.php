@@ -1,53 +1,35 @@
-<div class="page-hero mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-    <div>
-        <h1>Tổng quan hôm nay</h1>
-        <p>Chúc bạn một ngày bán hàng thật hiệu quả ✨</p>
-    </div>
-    <span class="hero-date"><i class="bi bi-calendar3"></i> <?= date('d/m/Y') ?></span>
-</div>
+<h1 class="h4 mb-4">Tổng quan hôm nay</h1>
 
 <div class="row g-3 mb-4">
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="card stat-card border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between gap-3">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Doanh thu hôm nay</div>
-                    <div class="stat-value"><?= money($revenue) ?></div>
-                </div>
-                <span class="stat-icon s-violet"><i class="bi bi-cash-coin"></i></span>
+            <div class="card-body">
+                <div class="text-muted small">Doanh thu hôm nay</div>
+                <div class="fs-4 fw-semibold"><?= money($revenue) ?></div>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="card stat-card border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between gap-3">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Số hóa đơn</div>
-                    <div class="stat-value"><?= e($orderCount) ?></div>
-                </div>
-                <span class="stat-icon s-pink"><i class="bi bi-receipt"></i></span>
+            <div class="card-body">
+                <div class="text-muted small">Số hóa đơn</div>
+                <div class="fs-4 fw-semibold"><?= e($orderCount) ?></div>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="card stat-card border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between gap-3">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Sản phẩm sắp hết hàng</div>
-                    <div class="stat-value text-warning"><?= count($lowStock) ?></div>
-                </div>
-                <span class="stat-icon s-amber"><i class="bi bi-exclamation-triangle"></i></span>
+            <div class="card-body">
+                <div class="text-muted small">Sản phẩm sắp hết hàng</div>
+                <div class="fs-4 fw-semibold text-warning"><?= count($lowStock) ?></div>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="card stat-card border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between gap-3">
-                <div>
-                    <div class="text-muted small fw-medium mb-1">Lô sắp hết hạn (≤ 7 ngày)</div>
-                    <div class="stat-value text-danger"><?= count($expiring) ?></div>
-                </div>
-                <span class="stat-icon s-rose"><i class="bi bi-hourglass-split"></i></span>
+            <div class="card-body">
+                <div class="text-muted small">Lô sắp hết hạn (≤ 7 ngày)</div>
+                <div class="fs-4 fw-semibold text-danger"><?= count($expiring) ?></div>
             </div>
         </div>
     </div>
@@ -56,7 +38,7 @@
 <div class="row g-3">
     <div class="col-12 col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header"><i class="bi bi-box-seam text-primary me-1"></i> Tồn kho thấp</div>
+            <div class="card-header bg-white fw-semibold">Tồn kho thấp</div>
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0 align-middle">
                     <thead><tr><th>SKU</th><th>Sản phẩm</th><th class="text-end">Tồn</th><th class="text-end">Tối thiểu</th></tr></thead>
@@ -79,7 +61,7 @@
     </div>
     <div class="col-12 col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header"><i class="bi bi-clock-history text-danger me-1"></i> Hàng sắp hết hạn</div>
+            <div class="card-header bg-white fw-semibold">Hàng sắp hết hạn</div>
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0 align-middle">
                     <thead><tr><th>Lô</th><th>Sản phẩm</th><th>HSD</th><th class="text-end">Còn</th></tr></thead>

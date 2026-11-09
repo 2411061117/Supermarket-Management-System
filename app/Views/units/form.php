@@ -17,7 +17,7 @@ $action = $unit ? url("/units/{$unit['id']}") : url('/units');
                 'attrs'    => 'maxlength="50" autofocus',
             ]) ?>
             <div class="d-flex gap-2">
-                <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Lưu</button>
+                <button class="btn btn-success"><i class="bi bi-check-lg"></i> Lưu</button>
                 <a href="<?= url('/units') ?>" class="btn btn-outline-secondary">Hủy</a>
             </div>
         </form>
