@@ -10,12 +10,10 @@ use App\Core\Controller;
 class PlaceholderController extends Controller
 {
     private const MODULES = [
-        'shifts'    => ['Ca làm việc', 'Tuần 3'],
         'pos'       => ['Bán hàng tại quầy (POS)', 'Tuần 4'],
         'reports'   => ['Báo cáo thống kê', 'Tuần 4'],
     ];
 
-    public function shifts(): void    { $this->show('shifts'); }
     public function pos(): void       { $this->show('pos'); }
     public function reports(): void   { $this->show('reports'); }
 

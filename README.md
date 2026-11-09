@@ -13,8 +13,8 @@ Bài thực hành môn Phát triển phần mềm trên nền web — PHP 8 thu�
 | Username | Vai trò | Được vào |
 |---|---|---|
 | `admin` | Quản lý | Tất cả (kể cả Loại hàng, ĐVT, NCC, Sản phẩm, Nhân viên) |
-| `thungan1` | Thu ngân | Tổng quan, POS |
-| `kho1` | NV kho | Tổng quan, Kho hàng |
+| `thungan1` | Thu ngân | Tổng quan, POS, Ca làm việc |
+| `kho1` | NV kho | Tổng quan, Kho hàng (tồn kho, phiếu nhập) |
 
 ## Cấu trúc
 ```
@@ -37,5 +37,5 @@ docs/            Tài liệu phân tích thiết kế, test case
 ## Tiến độ
 - [x] Tuần 1: Khung MVC, CSDL, đăng nhập, phân quyền, dashboard
 - [x] Tuần 2: CRUD loại hàng, ĐVT, nhà cung cấp, sản phẩm (upload ảnh, API tìm kiếm), tài khoản nhân viên
-- [ ] Tuần 3: Nhập kho theo lô/HSD, tồn kho, cảnh báo, mở ca
+- [x] Tuần 3: Nhập kho theo lô/HSD (phiếu nhập nhiều dòng), tồn kho theo FEFO, cảnh báo tồn thấp/hết hạn, mở ca
 - [ ] Tuần 4: POS (FEFO, thanh toán, in hóa đơn), đóng ca, báo cáo
