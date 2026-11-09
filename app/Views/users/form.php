@@ -5,7 +5,7 @@ $action = $editing ? url("/users/{$user['id']}") : url('/users');
 ?>
 <h1 class="h4 mb-3"><?= e($title) ?></h1>
 
-<div class="card border-0 shadow-sm" style="max-width: 640px">
+<div class="card border-0 shadow-sm mx-auto" style="max-width: 640px">
     <div class="card-body">
         <form method="post" action="<?= $action ?>" novalidate autocomplete="off">
             <?= csrf_field() ?>
