@@ -29,6 +29,12 @@ class Supplier extends Model
         return $stmt->fetchAll();
     }
 
+    /** [id => tên] các nhà cung cấp đang hợp tác (cho ô chọn khi lập phiếu nhập). */
+    public function activeOptions(): array
+    {
+        return array_column($this->db->query('SELECT id, name FROM suppliers WHERE is_active = 1 ORDER BY name')->fetchAll(), 'name', 'id');
+    }
+
     public function receiptCount(int $id): int
     {
         $stmt = $this->db->prepare('SELECT COUNT(*) FROM goods_receipts WHERE supplier_id = ?');

@@ -9,7 +9,9 @@ namespace App\Core;
  *   ], ['name' => 'Tên đơn vị', 'price' => 'Giá bán']);
  *   if ($v->fails()) { $v->errors(); }
  *
- * Rule: required, min, max, numeric, integer, digits, email, phone, alpha_dash, in, same, unique, exists.
+ * Rule: required, min, max, numeric, integer, digits, email, phone, alpha_dash, in, same, unique, exists,
+ *       date (Y-m-d hợp lệ), after_or_equal:today|Y-m-d.
+ * Tên trường có thể là đường dẫn dạng chấm cho dữ liệu lồng nhau: 'items.0.qty' ứng với $data['items'][0]['qty'].
  * - Giá trị rỗng và không có `required` -> bỏ qua các rule còn lại (trường tùy chọn).
  * - min/max: với số (có rule numeric/integer) so sánh giá trị, còn lại so sánh độ dài chuỗi.
  */
@@ -22,6 +24,21 @@ class Validator
         foreach ($rules as $field => $ruleString) {
             $this->validateField($field, explode('|', $ruleString));
         }
+    }
+
+    /** Lấy giá trị theo đường dẫn dạng chấm ('items.0.qty'); trả $default nếu không có. */
+    public static function get(array $data, string $path, mixed $default = null): mixed
+    {
+        if (array_key_exists($path, $data)) {
+            return $data[$path];
+        }
+        foreach (explode('.', $path) as $key) {
+            if (!is_array($data) || !array_key_exists($key, $data)) {
+                return $default;
+            }
+            $data = $data[$key];
+        }
+        return $data;
     }
 
     public function fails(): bool
@@ -37,7 +54,7 @@ class Validator
 
     private function validateField(string $field, array $rules): void
     {
-        $value = $this->data[$field] ?? null;
+        $value = self::get($this->data, $field);
         $value = is_string($value) ? trim($value) : $value;
         $empty = $value === null || $value === '';
         $isNumeric = (bool) array_intersect($rules, ['numeric', 'integer']);
@@ -98,11 +115,24 @@ class Validator
             case 'alpha_dash':
                 return preg_match('/^\w+$/', $str) ? null : "$label chỉ gồm chữ không dấu, số và dấu gạch dưới.";
 
+            case 'date':
+                $d = \DateTime::createFromFormat('!Y-m-d', $str);
+                return ($d && $d->format('Y-m-d') === $str) ? null : "$label không phải ngày hợp lệ.";
+
+            case 'after_or_equal':
+                $limit = $arg === 'today' ? date('Y-m-d') : (string) $arg;
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $str)) {
+                    return null;   // sai định dạng đã do rule `date` báo
+                }
+                return $str >= $limit
+                    ? null
+                    : ($arg === 'today' ? "$label không được trước hôm nay." : "$label phải từ ngày " . date('d/m/Y', strtotime($limit)) . ' trở đi.');
+
             case 'in':
                 return in_array($str, explode(',', (string) $arg), true) ? null : "$label không hợp lệ.";
 
             case 'same':
-                $other = $this->data[$arg] ?? null;
+                $other = self::get($this->data, (string) $arg);
                 $other = is_string($other) ? trim($other) : $other;
                 return $other === $value ? null : "$label không khớp.";
 

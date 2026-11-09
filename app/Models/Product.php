@@ -32,6 +32,43 @@ class Product extends Model
         return $stmt->fetchAll();
     }
 
+    /** [id => 'SKU — Tên (ĐVT)'] các sản phẩm đang bán, cho ô chọn khi lập phiếu nhập. */
+    public function activeOptions(): array
+    {
+        $rows = $this->db->query(
+            'SELECT p.id, p.sku, p.name, u.name AS unit_name FROM products p JOIN units u ON u.id = p.unit_id
+              WHERE p.is_active = 1 ORDER BY p.name'
+        )->fetchAll();
+        $options = [];
+        foreach ($rows as $r) {
+            $options[$r['id']] = "{$r['sku']} — {$r['name']} ({$r['unit_name']})";
+        }
+        return $options;
+    }
+
+    /** [id => is_active] của các sản phẩm có id trong danh sách (id không tồn tại thì vắng mặt). */
+    public function activeFlags(array $ids): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if (!$ids) {
+            return [];
+        }
+        $stmt = $this->db->prepare('SELECT id, is_active FROM products WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')');
+        $stmt->execute($ids);
+        return array_map('intval', array_column($stmt->fetchAll(), 'is_active', 'id'));
+    }
+
+    public function findWithNames(int $id): ?array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT p.*, c.name AS category_name, u.name AS unit_name
+               FROM products p JOIN categories c ON c.id = p.category_id JOIN units u ON u.id = p.unit_id
+              WHERE p.id = ?'
+        );
+        $stmt->execute([$id]);
+        return $stmt->fetch() ?: null;
+    }
+
     /** Số lô hàng đã nhập của sản phẩm. Phiếu nhập và hóa đơn đều gắn với sản phẩm qua lô nên >0 nghĩa là đã phát sinh giao dịch. */
     public function batchCount(int $id): int
     {

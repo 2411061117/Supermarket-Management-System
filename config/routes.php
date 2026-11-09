@@ -10,8 +10,10 @@
 use App\Controllers\AuthController;
 use App\Controllers\CategoryController;
 use App\Controllers\DashboardController;
+use App\Controllers\InventoryController;
 use App\Controllers\PlaceholderController;
 use App\Controllers\ProductController;
+use App\Controllers\ReceiptController;
 use App\Controllers\SupplierController;
 use App\Controllers\UnitController;
 use App\Controllers\UserController;
@@ -70,7 +72,17 @@ $router->get('/users/{id}/edit',      [UserController::class, 'edit'],   ['admin
 $router->post('/users/{id}',          [UserController::class, 'update'], ['admin']);
 $router->post('/users/{id}/toggle',   [UserController::class, 'toggle'], ['admin']);
 
+// Tồn kho (chỉ đọc)
+$router->get('/inventory',                [InventoryController::class, 'index'],   ['admin', 'warehouse']);
+$router->get('/inventory/products/{id}',  [InventoryController::class, 'product'], ['admin', 'warehouse']);
+
+// Phiếu nhập kho (chứng từ: không sửa/xóa). /receipts/create phải khai báo TRƯỚC /receipts/{id}.
+$router->get('/receipts',        [ReceiptController::class, 'index'],  ['admin', 'warehouse']);
+$router->get('/receipts/create', [ReceiptController::class, 'create'], ['admin', 'warehouse']);
+$router->post('/receipts',       [ReceiptController::class, 'store'],  ['admin', 'warehouse']);
+$router->get('/receipts/{id}',   [ReceiptController::class, 'show'],  ['admin', 'warehouse']);
+
 // Chưa làm (Tuần 3–4) – trang tạm, thay dần bằng controller thật
-$router->get('/inventory', [PlaceholderController::class, 'inventory'], ['admin', 'warehouse']);
+$router->get('/shifts',    [PlaceholderController::class, 'shifts'],    ['admin', 'cashier']);
 $router->get('/pos',       [PlaceholderController::class, 'pos'],       ['admin', 'cashier']);
 $router->get('/reports',   [PlaceholderController::class, 'reports'],   ['admin']);

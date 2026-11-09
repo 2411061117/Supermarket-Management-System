@@ -143,3 +143,73 @@ Tài khoản đăng nhập: `admin` / `123456`. Toàn bộ chức năng chỉ d�
 | 21 | Thiếu hoặc sai `_csrf` khi thêm/sửa/khóa | **419**, không đổi dữ liệu |
 | 22 | `kho1` / `thungan1` vào mọi route `/users*` và POST thêm/sửa/khóa (cố tạo admin, đặt lại mật khẩu admin) | **403**, dữ liệu không đổi; menu không có "Nhân viên" |
 | 23 | Hồi quy đăng nhập: sai mật khẩu, tài khoản không tồn tại, SQLi, đăng xuất | Báo lỗi chung / bị từ chối; sau đăng xuất vào `/users` bị chuyển `/login` |
+
+## Tuần 3 — Tồn kho (`/inventory`)
+
+Đăng nhập `admin` hoặc `kho1` (`123456`). Cần có vài lô trong `product_batches` để thấy cảnh báo (Bước 5 sẽ thêm vào seed).
+
+| # | Thao tác | Kết quả mong đợi |
+|---|----------|------------------|
+| 1 | Mở `/inventory` khi chưa có lô nào | Liệt kê mọi sản phẩm đang bán, tồn 0, nhãn "Hết hàng"; thẻ "Hết hàng" = số sản phẩm |
+| 2 | Sản phẩm có lô xa hạn + lô sắp hết hạn + lô đã hết hạn | Tồn bán được = lô xa + lô sắp hết hạn (không tính lô đã hết hạn); hiện "Sắp hết hạn: x" và "Hết hạn: y" |
+| 3 | Sản phẩm chỉ có lô đã hết hạn | Tồn 0, nhãn "Hết hàng" + "Hết hạn: y" |
+| 4 | Lô không HSD; lô có HSD đúng hôm nay; lô HSD đúng +7 ngày | Không HSD không bao giờ cảnh báo; hôm nay vẫn còn hạn; +7 ngày tính là sắp hết hạn |
+| 5 | Tồn ≤ tồn tối thiểu (còn hàng) | Nhãn "Tồn thấp" |
+| 6 | Bấm thẻ cảnh báo / lọc theo tình trạng (tồn thấp, hết hàng, đủ hàng, sắp hết hạn, đã hết hạn), loại hàng | Danh sách lọc đúng, số thẻ khớp số dòng; giá trị lạ (`status=bogus`, `category_id=abc`, tham số dạng mảng) coi như không lọc |
+| 7 | Tìm `%`, `_`, `' OR 1=1 --`, `<script>` | Coi là ký tự thường, không lỗi SQL, không chạy script |
+| 8 | Sản phẩm đã ngừng bán: còn hàng / hết sạch | Còn hàng thì vẫn hiện kèm nhãn "Ngừng bán"; hết sạch thì ẩn |
+| 9 | Bấm "Xem lô" | Các lô xếp FEFO (HSD gần nhất trước, không HSD cuối); nhãn Còn hạn / Sắp hết hạn / Đã hết hạn; lô đã hết hàng bị ẩn |
+| 10 | Chi tiết lô `?all=1` | Hiện cả lô đã hết hàng (nhãn "Đã hết hàng") |
+| 11 | Mã lô chứa `<script>`; lô của chi nhánh khác | Mã lô được escape; lô chi nhánh khác không hiện |
+| 12 | `/inventory/products/abc`, `/inventory/products/99999` | **404** |
+| 13 | 13+ sản phẩm: trang cuối, `page=999`, lọc rồi sang trang 2 | 10 dòng/trang, trang cuối đúng, page sai được kẹp, link giữ `status`, `q`, `category_id` |
+| 14 | `thungan1` vào `/inventory`, `/inventory/products/1`; chưa đăng nhập | **403**; chưa đăng nhập về `/login` |
+| 15 | Dashboard | "Tồn kho thấp" không tính lô hết hạn; admin/kho1 có link "Xem tồn kho", thu ngân không có |
+
+## Tuần 3 — Phiếu nhập kho: xem (`/receipts`)
+
+Đăng nhập `admin` hoặc `kho1` (`123456`). Cần có phiếu trong DB (Bước 3 sẽ cho lập phiếu từ giao diện).
+
+| # | Thao tác | Kết quả mong đợi |
+|---|----------|------------------|
+| 1 | Mở `/receipts` khi chưa có phiếu | Thông báo "Chưa có phiếu nhập nào" |
+| 2 | Có nhiều phiếu | Mới nhất trước; mỗi dòng có mã, ngày `d/m/Y H:i`, NCC, người lập, số dòng, tổng giá trị (Σ giá nhập × SL); phiếu chi nhánh khác không hiện |
+| 3 | Lọc theo mã phiếu (một phần), NCC | Đúng kết quả; `supplier_id=abc` coi như không lọc; NCC không tồn tại → "Không tìm thấy phiếu nhập phù hợp" |
+| 4 | Lọc theo khoảng ngày: cùng một ngày; chỉ từ / chỉ đến | Gồm cả phiếu lập lúc 23:59:59 của ngày `to` |
+| 5 | Khoảng ngày bị ngược (từ > đến) | Tự đổi chỗ + thông báo, vẫn ra kết quả |
+| 6 | Ngày sai (`abc`, `2026-02-30`), tham số dạng mảng | Bỏ qua, không lỗi/warning |
+| 7 | Tìm `%`, `' OR 1=1 --`, `<script>` | Coi là ký tự thường, không lỗi SQL, không chạy script |
+| 8 | Bấm "Xem" | Thông tin phiếu (ngày, NCC + SĐT, người lập, ghi chú đã escape; trống → "—"); bảng dòng: SKU, sản phẩm, mã lô, HSD (`—` nếu không có), SL + ĐVT, giá nhập, thành tiền; tổng cộng đúng |
+| 9 | Phiếu không có dòng | Thông báo "Phiếu không có dòng nào", tổng 0 ₫ |
+| 10 | `/receipts/abc`, `/receipts/1.5`, `/receipts/99999`, phiếu của chi nhánh khác | **404** |
+| 11 | `/receipts/{id}/edit`, `/receipts/{id}/delete` (GET và POST) | **404** — phiếu là chứng từ, không sửa/xóa; dữ liệu còn nguyên |
+| 12 | 15 phiếu: trang 1, trang 2, `page=999`, `-3`; lọc rồi sang trang 2 | 10/5 dòng; page sai được kẹp; link phân trang giữ `supplier_id`, `from`… |
+| 13 | `thungan1` vào `/receipts*`; chưa đăng nhập | **403**; chưa đăng nhập về `/login` |
+
+## Tuần 3 — Lập phiếu nhập kho (`/receipts/create`)
+
+Đăng nhập `kho1` hoặc `admin` (`123456`). Sau mỗi ca "bị từ chối" cần kiểm tra thêm: không có phiếu, lô hay dòng phiếu nào được lưu.
+
+| # | Thao tác | Kết quả mong đợi |
+|---|----------|------------------|
+| 1 | Mở form | Có NCC đang hợp tác (không có NCC ngừng), sản phẩm đang bán (không có SP ngừng bán), 1 dòng trống, nút "Thêm dòng", ô HSD có `min` = hôm nay |
+| 2 | Lập phiếu 3 dòng (2 sản phẩm, 1 sản phẩm có 2 lô; 1 dòng không HSD; 1 dòng HSD hôm nay) | Chuyển tới chi tiết phiếu, báo "Đã lập phiếu nhập PN-… (3 dòng, tổng …)"; DB: 1 phiếu, 3 lô, 3 dòng; `qty_received = qty_remaining`; người lập, chi nhánh, ghi chú đúng; tồn kho tăng đúng |
+| 3 | Lập phiếu thứ 2 trong ngày | Mã tăng `-002` |
+| 4 | Giá nhập 0; mã lô trùng nhưng ở sản phẩm khác; biên (ghi chú 255, mã lô 50, SL 1.000.000, giá 999.999.999); khoảng trắng đầu/cuối | Được chấp nhận; khoảng trắng bị cắt |
+| 5 | Chưa chọn / không tồn tại / là chữ / đã ngừng hợp tác NCC; ghi chú 256 ký tự | Báo lỗi, không lưu |
+| 6 | Không có dòng nào; `items` gửi sai kiểu; dòng trống hết; trường là mảng | Báo lỗi ("ít nhất 1 dòng"…), không lỗi PHP |
+| 7 | Dòng: chưa chọn SP / SP không tồn tại / SP ngừng bán | Báo lỗi đúng dòng |
+| 8 | Mã lô trống, 51 ký tự | Báo lỗi |
+| 9 | HSD quá khứ, sai định dạng (`31/12/2030`), không tồn tại (`2030-02-30`) | Báo lỗi |
+| 10 | SL = 0, âm, chữ, thập phân, `1e3`, > 1.000.000 | Báo lỗi |
+| 11 | Giá nhập âm, chữ, > 999.999.999 | Báo lỗi |
+| 12 | Mã lô đã có (kể cả khác hoa/thường); trùng mã lô giữa 2 dòng cùng sản phẩm | Báo "đã tồn tại" / "trùng với dòng 1" |
+| 13 | 51 dòng | Báo "tối đa 50 dòng" |
+| 14 | Dòng 1 hợp lệ, dòng 2 lỗi | Cả phiếu bị từ chối, dòng 1 không bị lưu mồ côi |
+| 15 | Sau khi lỗi | Form giữ NCC, ghi chú, đủ số dòng và dữ liệu từng dòng (kể cả `<i>` được escape); chỉ ô sai bị tô đỏ kèm thông báo đúng dòng; ô mẫu không dính dữ liệu cũ; tải lại thì dữ liệu cũ biến mất |
+| 16 | Ghi chú/mã lô chứa `<script>`, `x' OR '1'='1` | Lưu nguyên văn, hiển thị escape, không lỗi SQL, bảng còn nguyên |
+| 17 | Thiếu / sai `_csrf`; `thungan1` POST; chưa đăng nhập | 419 / 403 / về `/login`; không lưu gì |
+| 18 | Gửi lại y hệt lần trước (bấm lưu 2 lần, F5) | Lần 2 bị chặn do trùng mã lô, không có phiếu thứ 2; nút Lưu bị khóa sau khi bấm |
+| 19 | Lỗi CSDL giữa chừng (giả lập bằng trigger lỗi ở dòng 2) | Rollback: không còn phiếu, lô, dòng nào (kể cả dòng 1) |
+| 20 | 6 người lập phiếu cùng lúc: mã lô khác nhau / cùng mã lô | 6 phiếu, 6 mã phiếu khác nhau / chỉ đúng 1 phiếu được lưu; mọi lô đều có dòng phiếu |
+| 21 | Trên form: gõ SL và giá, thêm/xóa dòng | "Tổng giá trị nhập" tự cập nhật; ô không hợp lệ bị bỏ qua |
