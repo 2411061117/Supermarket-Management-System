@@ -213,3 +213,38 @@ Tài khoản đăng nhập: `admin` / `123456`. Toàn bộ chức năng chỉ d�
 | 19 | Lỗi CSDL giữa chừng (giả lập bằng trigger lỗi ở dòng 2) | Rollback: không còn phiếu, lô, dòng nào (kể cả dòng 1) |
 | 20 | 6 người lập phiếu cùng lúc: mã lô khác nhau / cùng mã lô | 6 phiếu, 6 mã phiếu khác nhau / chỉ đúng 1 phiếu được lưu; mọi lô đều có dòng phiếu |
 | 21 | Trên form: gõ SL và giá, thêm/xóa dòng | "Tổng giá trị nhập" tự cập nhật; ô không hợp lệ bị bỏ qua |
+
+## Tuần 3 — Ca làm việc (`/shifts`)
+
+Đăng nhập `thungan1` hoặc `admin` (`123456`). Đóng ca/đối chiếu tiền mặt làm ở Tuần 4.
+
+| # | Thao tác | Kết quả mong đợi |
+|---|----------|------------------|
+| 1 | `kho1` vào `/shifts`, POST `/shifts/open`; chưa đăng nhập | **403**, không tạo ca; chưa đăng nhập về `/login`; `kho1` không thấy nút trạng thái ca trên thanh trên |
+| 2 | Thu ngân vào khi chưa có ca | Thẻ "Chưa mở ca", form (tiền đầu ca mặc định 0, ghi chú), "Chưa có ca nào"; thanh trên có nút vàng "Chưa mở ca" |
+| 3 | Mở ca: tiền đầu ca ` 500000 `, ghi chú | Báo "Đã mở ca với tiền đầu ca 500.000 ₫"; DB: đúng chi nhánh/người, `status = open`, chưa có `closed_at`; thẻ "Đang mở" + giờ mở + "đã … phút"; form biến mất; thanh trên "Ca mở từ HH:MM" ở mọi trang |
+| 4 | Mở ca khi đã có ca mở | Bị chặn, báo "đang có một ca mở", không tạo ca thứ 2, ca cũ không đổi |
+| 5 | Tiền đầu ca: trống, âm, chữ, `1.5`, `1.000`, `1e3`, dạng mảng, thiếu trường, > 999.999.999 | Báo lỗi đúng, không tạo ca |
+| 6 | Ghi chú 256 ký tự | Báo lỗi; biên 255 ký tự, tiền 0 và 999.999.999 được chấp nhận |
+| 7 | Form lỗi | Giữ giá trị đã nhập (ghi chú được escape), tải lại thì biến mất |
+| 8 | Ghi chú `<script>…`, `' OR 1=1 --` | Lưu nguyên văn, hiển thị escape, không lỗi SQL |
+| 9 | Thiếu/sai `_csrf`; GET `/shifts/open`; `/shifts/1` | 419 (không tạo ca); 404; 404 |
+| 10 | Thu ngân xem danh sách, kể cả thêm `?user_id=<admin>` | Chỉ thấy ca của chính mình, không lộ tên người khác, không có ô lọc nhân viên |
+| 11 | Admin xem danh sách | Thấy mọi ca kèm tên + username; lọc nhân viên, trạng thái, khoảng ngày mở ca; giá trị lạ (`user_id=abc`, `status=bogus`, dạng mảng, ngày sai) coi như không lọc |
+| 12 | Khoảng ngày ngược | Tự đổi chỗ + thông báo |
+| 13 | Ca đã đóng / ca dưới 1 giờ / ca đang mở 125 phút | Hiển thị giờ đóng, tiền cuối ca, nhãn "Đã đóng"; "45 phút"; "2 giờ 5 phút" (tính theo đồng hồ CSDL) |
+| 14 | 22 ca: trang 1, trang cuối, `page=999`, `-3`; lọc rồi sang trang 2 | 10 dòng/trang; page sai được kẹp; link giữ bộ lọc |
+| 15 | 6 request mở ca đồng thời của cùng một người | Đúng 1 ca được tạo; không ai có 2 ca đang mở |
+
+## Tuần 3 — Dữ liệu mẫu tồn kho (`database/seed.sql`)
+
+Import lại `schema.sql` rồi `seed.sql` (ngày hết hạn tính tương đối so với hôm nay nên cảnh báo luôn đúng).
+
+| # | Kiểm tra | Kết quả mong đợi |
+|---|----------|------------------|
+| 1 | `/inventory` ngay sau khi import | 5 sản phẩm; thẻ Hết hàng = 1 (Sữa tươi), Tồn thấp = 2 (Mì ly + Sữa), Sắp hết hạn = 1 (Coca), Đã hết hạn = 1 (Coca) |
+| 2 | Coca-Cola (DU002) | Tồn bán được 40 (10 lon lô đã hết hạn không tính); "Sắp hết hạn: 40", "Hết hạn: 10"; chi tiết lô xếp FEFO: CC-2412 trước CC-2501 |
+| 3 | Mì ly (TP001) | Tồn 12 ≤ tối thiểu 20 → "Tồn thấp" |
+| 4 | Khăn giấy (HM001) | 50, lô không HSD → "Đủ hàng", không cảnh báo hạn |
+| 5 | `/receipts` | 2 phiếu `PN-…-001` (tổng 1.110.000 ₫ và 385.000 ₫), mỗi lô có đúng 1 dòng phiếu |
+| 6 | Dashboard | Tồn kho thấp: 2 sản phẩm; "Hàng sắp hết hạn" liệt kê CC-2501 và CC-2412 |

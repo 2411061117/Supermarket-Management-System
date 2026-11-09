@@ -76,4 +76,4 @@ Nên làm Bước 1–2 trước Bước 3: có sẵn trang xem để kiểm tra
 
 ## Tiến độ
 - [x] Bước 0
-- [x] Bước 1 · [x] Bước 2 · [x] Bước 3 · [ ] Bước 4 · [ ] Bước 5
+- [x] Bước 1 · [x] Bước 2 · [x] Bước 3 · [x] Bước 4 · [x] Bước 5

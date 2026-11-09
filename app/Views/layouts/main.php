@@ -2,6 +2,7 @@
 use App\Core\App;
 use App\Core\Auth;
 use App\Core\Session;
+use App\Models\Shift;
 
 $user = Auth::user();
 // [đường dẫn, icon, nhãn, các vai trò thấy menu, (tùy chọn) mục con [[đường dẫn, nhãn], ...]]
@@ -43,6 +44,13 @@ $menu = [
     <a class="navbar-brand fw-semibold me-auto" href="<?= url('/') ?>">
         <i class="bi bi-shop"></i> <?= e(App::config('app.name')) ?>
     </a>
+    <?php if (Auth::hasRole('admin', 'cashier')): ?>
+        <?php $myShift = (new Shift())->findOpenByUser((int) $user['id']); ?>
+        <a href="<?= url('/shifts') ?>" class="btn btn-sm me-2 <?= $myShift ? 'btn-light text-success' : 'btn-warning' ?>">
+            <i class="bi bi-clock-history"></i>
+            <?= $myShift ? 'Ca mở từ ' . e(date('H:i', strtotime($myShift['opened_at']))) : 'Chưa mở ca' ?>
+        </a>
+    <?php endif; ?>
     <div class="dropdown">
         <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
             <i class="bi bi-person-circle"></i>

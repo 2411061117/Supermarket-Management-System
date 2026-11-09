@@ -33,6 +33,26 @@ INSERT INTO products (sku, barcode, name, category_id, unit_id, sale_price, min_
 ('SU001', '8934673573225', 'Sữa tươi có đường 180ml',3, 4,  8000, 30),
 ('HM001', '8934839120086', 'Khăn giấy bỏ túi',       4, 3,  6000, 10);
 
+-- ---------- Tồn kho mẫu (Tuần 3) ----------
+-- Ngày tính tương đối so với hôm nay để cảnh báo luôn hiển thị đúng lúc import. Mỗi sản phẩm (id theo thứ tự ở trên):
+--   1 DU001 Nước suối  : 100 chai, HSD xa             -> đủ hàng
+--   2 DU002 Coca-Cola  : 40 lon sắp hết hạn (5 ngày) + 10 lon ĐÃ hết hạn (không tính vào tồn bán được)
+--   3 TP001 Mì ly      : còn 12 (<= tối thiểu 20)      -> tồn thấp
+--   4 SU001 Sữa tươi   : chưa nhập                     -> hết hàng
+--   5 HM001 Khăn giấy  : 50 gói, không có HSD          -> đủ hàng
+INSERT INTO goods_receipts (id, code, store_id, supplier_id, user_id, note, created_at) VALUES
+(1, CONCAT('PN-', DATE_FORMAT(CURDATE() - INTERVAL 10 DAY, '%Y%m%d'), '-001'), 1, 1, 3, 'Nhập đồ uống đầu kỳ',  CURDATE() - INTERVAL 10 DAY + INTERVAL 9 HOUR),
+(2, CONCAT('PN-', DATE_FORMAT(CURDATE() - INTERVAL 3 DAY,  '%Y%m%d'), '-001'), 1, 2, 3, 'Nhập thực phẩm',      CURDATE() - INTERVAL 3 DAY  + INTERVAL 14 HOUR);
+
+INSERT INTO product_batches (id, store_id, product_id, batch_code, expiry_date, cost_price, qty_received, qty_remaining, received_at) VALUES
+(1, 1, 1, 'NS-2501', CURDATE() + INTERVAL 180 DAY, 3000, 100, 100, CURDATE() - INTERVAL 10 DAY + INTERVAL 9 HOUR),
+(2, 1, 2, 'CC-2501', CURDATE() + INTERVAL 5 DAY,   9000,  60,  40, CURDATE() - INTERVAL 10 DAY + INTERVAL 9 HOUR),
+(3, 1, 2, 'CC-2412', CURDATE() - INTERVAL 3 DAY,   9000,  30,  10, CURDATE() - INTERVAL 10 DAY + INTERVAL 9 HOUR),
+(4, 1, 3, 'MI-2501', CURDATE() + INTERVAL 90 DAY,  7000,  30,  12, CURDATE() - INTERVAL 3 DAY + INTERVAL 14 HOUR),
+(5, 1, 5, 'KG-01',   NULL,                         3500,  50,  50, CURDATE() - INTERVAL 3 DAY + INTERVAL 14 HOUR);
+
+INSERT INTO goods_receipt_items (receipt_id, batch_id) VALUES (1, 1), (1, 2), (1, 3), (2, 4), (2, 5);
+
 INSERT INTO payment_methods (code, name) VALUES
 ('cash', 'Tiền mặt'), ('bank', 'Chuyển khoản'), ('ewallet', 'Ví điện tử');
 

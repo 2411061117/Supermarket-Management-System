@@ -14,6 +14,7 @@ use App\Controllers\InventoryController;
 use App\Controllers\PlaceholderController;
 use App\Controllers\ProductController;
 use App\Controllers\ReceiptController;
+use App\Controllers\ShiftController;
 use App\Controllers\SupplierController;
 use App\Controllers\UnitController;
 use App\Controllers\UserController;
@@ -82,7 +83,10 @@ $router->get('/receipts/create', [ReceiptController::class, 'create'], ['admin',
 $router->post('/receipts',       [ReceiptController::class, 'store'],  ['admin', 'warehouse']);
 $router->get('/receipts/{id}',   [ReceiptController::class, 'show'],  ['admin', 'warehouse']);
 
-// Chưa làm (Tuần 3–4) – trang tạm, thay dần bằng controller thật
-$router->get('/shifts',    [PlaceholderController::class, 'shifts'],    ['admin', 'cashier']);
+// Ca làm việc (mở ca + xem; đóng ca làm ở Tuần 4)
+$router->get('/shifts',       [ShiftController::class, 'index'], ['admin', 'cashier']);
+$router->post('/shifts/open', [ShiftController::class, 'open'],  ['admin', 'cashier']);
+
+// Chưa làm (Tuần 4) – trang tạm, thay dần bằng controller thật
 $router->get('/pos',       [PlaceholderController::class, 'pos'],       ['admin', 'cashier']);
 $router->get('/reports',   [PlaceholderController::class, 'reports'],   ['admin']);
