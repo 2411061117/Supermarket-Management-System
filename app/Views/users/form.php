@@ -94,7 +94,7 @@ $action = $editing ? url("/users/{$user['id']}") : url('/users');
             </div>
 
             <div class="d-flex gap-2">
-                <button class="btn btn-success"><i class="bi bi-check-lg"></i> Lưu</button>
+                <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Lưu</button>
                 <a href="<?= url('/users') ?>" class="btn btn-outline-secondary">Hủy</a>
             </div>
         </form>

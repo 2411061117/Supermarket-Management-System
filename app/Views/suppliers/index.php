@@ -1,6 +1,6 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h4 mb-0">Nhà cung cấp</h1>
-    <a href="<?= url('/suppliers/create') ?>" class="btn btn-success">
+    <a href="<?= url('/suppliers/create') ?>" class="btn btn-primary">
         <i class="bi bi-plus-lg"></i> Thêm nhà cung cấp
     </a>
 </div>
