@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Core\BusinessException;
 use App\Core\Model;
 
 /**
@@ -20,6 +21,49 @@ class Batch extends Model
         $stmt = $this->db->prepare('SELECT 1 FROM product_batches WHERE product_id = ? AND batch_code = ? LIMIT 1');
         $stmt->execute([$productId, $batchCode]);
         return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * Phân bổ $qty của sản phẩm vào các lô theo FEFO (HSD gần nhất trước, không HSD xếp cuối),
+     * chỉ lấy lô còn hạn và còn hàng. Khóa các lô đó (FOR UPDATE) nên PHẢI gọi trong transaction của
+     * người gọi và giữ transaction đến khi trừ kho xong. Hàm này CHỈ phân bổ, không trừ qty_remaining.
+     * Trả về [['batch_id' => .., 'qty' => .., 'cost_price' => ..], ...]; thiếu tồn thì ném BusinessException
+     * có details['available'] = số lượng bán được.
+     */
+    public function allocateFefo(int $productId, int $storeId, int $qty): array
+    {
+        if (!$this->db->inTransaction()) {
+            throw new \LogicException('allocateFefo phải được gọi trong transaction.');
+        }
+        if ($qty <= 0) {
+            throw new \InvalidArgumentException('Số lượng phải lớn hơn 0.');
+        }
+        $stmt = $this->db->prepare(
+            'SELECT id, qty_remaining, cost_price
+               FROM product_batches
+              WHERE product_id = ? AND store_id = ? AND qty_remaining > 0
+                AND (expiry_date IS NULL OR expiry_date >= CURDATE())
+              ORDER BY expiry_date IS NULL, expiry_date, id
+                FOR UPDATE'
+        );
+        $stmt->execute([$productId, $storeId]);
+        $batches = $stmt->fetchAll();
+
+        $available = array_sum(array_column($batches, 'qty_remaining'));
+        if ($available < $qty) {
+            throw new BusinessException("Không đủ hàng (còn $available).", ['available' => (int) $available]);
+        }
+        $result = [];
+        $need = $qty;
+        foreach ($batches as $b) {
+            $take = min($need, (int) $b['qty_remaining']);
+            $result[] = ['batch_id' => (int) $b['id'], 'qty' => $take, 'cost_price' => (int) $b['cost_price']];
+            $need -= $take;
+            if ($need === 0) {
+                break;
+            }
+        }
+        return $result;
     }
 
     public function countStock(int $storeId, string $q, int $categoryId, string $status): int

@@ -88,3 +88,36 @@ window.addEventListener('pageshow', e => {   // quay lại bằng nút Back: cho
         f.querySelectorAll('button').forEach(b => { b.disabled = false; });
     });
 });
+
+// ---- POS (Tuần 4) ----
+// Logic giỏ hàng thuần (không đụng DOM) để dễ kiểm thử; phần giao diện nối ở Bước 2.
+// Tiền là số nguyên (đồng). Server luôn tính lại giá/tổng; client chỉ gửi product_id + qty.
+const PosCart = {
+    /** items: [{id, name, price, qty, stock}] */
+    add(items, product, qty = 1) {
+        const line = items.find(i => i.id === product.id);
+        const stock = Number(product.stock);
+        if (line) line.qty = Math.min(line.qty + qty, stock);
+        else if (stock > 0) items.push({ id: product.id, name: product.name, price: Number(product.sale_price), qty: Math.min(qty, stock), stock });
+        return items;
+    },
+    setQty(items, id, qty) {
+        const line = items.find(i => i.id === id);
+        if (!line) return items;
+        qty = Math.floor(Number(qty));
+        if (!(qty > 0)) return PosCart.remove(items, id);
+        line.qty = Math.min(qty, line.stock);
+        return items;
+    },
+    remove(items, id) {
+        const i = items.findIndex(l => l.id === id);
+        if (i >= 0) items.splice(i, 1);
+        return items;
+    },
+    subtotal: items => items.reduce((sum, i) => sum + i.price * i.qty, 0),
+    /** Giảm giá bị ép về [0, tạm tính]. */
+    total: (items, discount = 0) => PosCart.subtotal(items) - Math.min(Math.max(0, Math.floor(discount) || 0), PosCart.subtotal(items)),
+    /** Tiền thối; âm nghĩa là khách đưa thiếu (chặn thanh toán). */
+    change: (total, given) => Math.floor(given) - total,
+    money: n => Math.round(n).toLocaleString('vi-VN') + ' ₫',
+};

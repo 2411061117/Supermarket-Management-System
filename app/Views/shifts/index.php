@@ -25,7 +25,22 @@ $fmtDuration = function (int $min): string {
                 <dt class="col-sm-5">Ghi chú</dt>
                 <dd class="col-sm-7 mb-0"><?= ($current['note'] ?? '') !== '' ? e($current['note']) : '—' ?></dd>
             </dl>
-            <div class="form-text mt-2">Chức năng đóng ca và đối chiếu tiền mặt sẽ có ở Tuần 4.</div>
+            <hr>
+            <form method="post" action="<?= url('/shifts/' . (int) $current['id'] . '/close') ?>" novalidate data-once
+                  onsubmit="return confirm('Đóng ca hiện tại? Sau khi đóng không thể mở lại.')">
+                <?= csrf_field() ?>
+                <div class="mb-2">Tiền mặt dự kiến trong két: <strong><?= money($expected) ?></strong></div>
+                <?php partial('field', [
+                    'name'     => 'closing_cash',
+                    'label'    => 'Tiền mặt đếm thực tế cuối ca (₫)',
+                    'type'     => 'number',
+                    'value'    => (string) $expected,
+                    'required' => true,
+                    'help'     => 'Đếm tiền trong két và nhập số thực tế. Hệ thống ghi nhận chênh lệch nếu có.',
+                    'attrs'    => 'min="0" max="999999999" step="1" inputmode="numeric"',
+                ]) ?>
+                <button class="btn btn-danger"><i class="bi bi-stop-circle"></i> Đóng ca</button>
+            </form>
         <?php else: ?>
             <div class="d-flex align-items-center gap-2 mb-3">
                 <span class="badge text-bg-secondary">Chưa mở ca</span>
@@ -112,6 +127,14 @@ $fmtDuration = function (int $min): string {
                     <td>
                         <?php if ($s['status'] === 'open'): ?>
                             <span class="badge text-bg-success">Đang mở</span>
+                            <?php if ($isAdmin && (!$current || (int) $current['id'] !== (int) $s['id'])): ?>
+                                <form method="post" action="<?= url('/shifts/' . (int) $s['id'] . '/close') ?>" class="d-inline-flex gap-1 mt-1" data-once
+                                      onsubmit="return confirm('Đóng hộ ca #<?= (int) $s['id'] ?> với số tiền đã nhập?')">
+                                    <?= csrf_field() ?>
+                                    <input type="number" name="closing_cash" class="form-control form-control-sm" style="width:9rem" min="0" max="999999999" step="1" required placeholder="Tiền cuối ca" aria-label="Tiền cuối ca">
+                                    <button class="btn btn-sm btn-outline-danger text-nowrap">Đóng ca</button>
+                                </form>
+                            <?php endif; ?>
                         <?php else: ?>
                             <span class="badge text-bg-secondary">Đã đóng</span>
                         <?php endif; ?>
