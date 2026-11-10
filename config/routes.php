@@ -11,9 +11,11 @@ use App\Controllers\AuthController;
 use App\Controllers\CategoryController;
 use App\Controllers\DashboardController;
 use App\Controllers\InventoryController;
-use App\Controllers\PlaceholderController;
+use App\Controllers\OrderController;
+use App\Controllers\PosController;
 use App\Controllers\ProductController;
 use App\Controllers\ReceiptController;
+use App\Controllers\ReportController;
 use App\Controllers\ShiftController;
 use App\Controllers\SupplierController;
 use App\Controllers\UnitController;
@@ -87,6 +89,9 @@ $router->get('/receipts/{id}',   [ReceiptController::class, 'show'],  ['admin', 
 $router->get('/shifts',       [ShiftController::class, 'index'], ['admin', 'cashier']);
 $router->post('/shifts/open', [ShiftController::class, 'open'],  ['admin', 'cashier']);
 
-// Chưa làm (Tuần 4) – trang tạm, thay dần bằng controller thật
-$router->get('/pos',       [PlaceholderController::class, 'pos'],       ['admin', 'cashier']);
-$router->get('/reports',   [PlaceholderController::class, 'reports'],   ['admin']);
+// ---- Tuần 4: bán hàng, hóa đơn, báo cáo. Xem docs/PLAN-W4.md ----
+$router->get('/pos', [PosController::class, 'index'], ['admin', 'cashier']);
+
+$router->get('/orders', [OrderController::class, 'index'], ['admin', 'cashier']);
+
+$router->get('/reports', [ReportController::class, 'index'], ['admin']);

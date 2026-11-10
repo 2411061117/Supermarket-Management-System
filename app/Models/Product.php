@@ -99,6 +99,21 @@ class Product extends Model
         return $stmt->fetchAll();
     }
 
+    /** Sản phẩm đang bán khớp CHÍNH XÁC mã vạch hoặc SKU (máy quét ở POS); null nếu không có. Kèm giá và tồn bán được. */
+    public function findActiveByCode(string $code): ?array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT p.id, p.sku, p.barcode, p.name, p.sale_price, u.name AS unit_name,
+                    COALESCE((SELECT SUM(b.qty_remaining) FROM product_batches b
+                               WHERE b.product_id = p.id AND (b.expiry_date IS NULL OR b.expiry_date >= CURDATE())), 0) AS stock
+               FROM products p JOIN units u ON u.id = p.unit_id
+              WHERE p.is_active = 1 AND (p.barcode = ? OR p.sku = ?)
+              LIMIT 1"
+        );
+        $stmt->execute([$code, $code]);
+        return $stmt->fetch() ?: null;
+    }
+
     /** Điều kiện WHERE: tìm theo tên/SKU/barcode, lọc loại hàng ($categoryId = 0: tất cả) và trạng thái. */
     private function filter(string $q, int $categoryId, string $status): array
     {
