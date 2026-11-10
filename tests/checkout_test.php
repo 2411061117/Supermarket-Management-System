@@ -191,5 +191,31 @@ echo "10. Sản phẩm ngừng bán\n";
 $p = $mkProduct('off', 1000, false); $mkBatch($p, null, 5);
 check('bị từ chối', expectBusiness(fn() => $orders->checkout(1, $cashier, [$line($p, 1)], 'bank')) !== null);
 
+echo "11. Hủy hóa đơn\n";
+$p = $mkProduct('cancel', 10000);
+$c1 = $mkBatch($p, $day(10), 4); $c2 = $mkBatch($p, $day(60), 10);
+$phone = '0922' . random_int(100000, 999999);
+$db->prepare("INSERT INTO customers (phone, full_name, points) VALUES (?, 'KH hủy', 20)")->execute([$phone]);
+$r = $orders->checkout(1, $cashier, [$line($p, 6)], 'bank', 0, $phone);   // 60.000 ₫ -> +6 điểm, lấy 4 từ lô sớm + 2 từ lô muộn
+check('trước khi hủy: lô 0 và 8, điểm 26', $remain($c1) === 0 && $remain($c2) === 8 && (int) scalar('SELECT points FROM customers WHERE phone = ?', [$phone]) === 26);
+$orders->cancel($r['id'], 1);
+check('hoàn đúng lô (4 và 10)', $remain($c1) === 4 && $remain($c2) === 10);
+check('trừ điểm đã cộng (về 20)', (int) scalar('SELECT points FROM customers WHERE phone = ?', [$phone]) === 20);
+check('trạng thái cancelled, không xóa dòng', scalar('SELECT status FROM orders WHERE id = ?', [$r['id']]) === 'cancelled' && (int) scalar('SELECT COUNT(*) FROM order_items WHERE order_id = ?', [$r['id']]) === 2);
+check('hủy lần 2 bị chặn, tồn không đổi', expectBusiness(fn() => $orders->cancel($r['id'], 1)) !== null && $remain($c1) === 4 && $remain($c2) === 10);
+check('hóa đơn hủy không tính vào tiền mặt dự kiến',
+    (int) scalar("SELECT COALESCE(SUM(p.amount),0) FROM payments p JOIN orders o ON o.id = p.order_id AND o.status = 'completed' WHERE o.id = ?", [$r['id']]) === 0);
+$r = $orders->checkout(1, $cashier, [$line($p, 1)], 'bank');
+$db->prepare("UPDATE shifts SET status = 'closed', closed_at = NOW() WHERE id = ?")->execute([$shift]);
+check('ca đã đóng -> không hủy được', expectBusiness(fn() => $orders->cancel($r['id'], 1)) !== null && scalar('SELECT status FROM orders WHERE id = ?', [$r['id']]) === 'completed');
+check('hóa đơn chi nhánh khác / không tồn tại -> lỗi', expectBusiness(fn() => $orders->cancel($r['id'], 999)) !== null && expectBusiness(fn() => $orders->cancel(99999999, 1)) !== null);
+check('điểm không bị âm khi trừ quá', (function () use ($db, $orders, $mkUser, $openShift, $line, $p, $phone, $mkBatch) {
+    $u = $mkUser('c2'); $openShift($u); $mkBatch($p, null, 5);
+    $r = $orders->checkout(1, $u, [$line($p, 3)], 'bank', 0, $phone);
+    $db->prepare('UPDATE customers SET points = 0 WHERE phone = ?')->execute([$phone]);
+    $orders->cancel($r['id'], 1);
+    return (int) scalar('SELECT points FROM customers WHERE phone = ?', [$phone]) === 0;
+})());
+
 echo "\nKết quả: $pass đạt, $fail lỗi\n";
 exit($fail ? 1 : 0);

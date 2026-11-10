@@ -95,4 +95,4 @@ Làm Bước 1 trước giao diện để kiểm thử logic tồn kho/đồng t
 
 ## Tiến độ
 - [x] Bước 0
-- [x] Bước 1 · [ ] Bước 2 · [ ] Bước 3 · [ ] Bước 4 · [ ] Bước 5 · [ ] Bước 6
+- [x] Bước 1 · [x] Bước 2 · [x] Bước 3 · [ ] Bước 4 · [ ] Bước 5 · [ ] Bước 6

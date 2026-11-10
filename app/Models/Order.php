@@ -39,8 +39,10 @@ class Order extends Model
     {
         $stmt = $this->db->prepare(
             "SELECT o.*, u.full_name AS user_name, c.full_name AS customer_name, c.phone AS customer_phone,
-                    m.code AS method_code, m.name AS method_name
+                    m.code AS method_code, m.name AS method_name, p.amount AS paid_amount,
+                    sh.status AS shift_status, sh.opened_at AS shift_opened_at
                FROM orders o
+               LEFT JOIN shifts sh ON sh.id = o.shift_id
                LEFT JOIN users u ON u.id = o.user_id
                LEFT JOIN customers c ON c.id = o.customer_id
                LEFT JOIN payments p ON p.order_id = o.id
@@ -100,8 +102,8 @@ class Order extends Model
                     $storeId, $userId, $wanted, $methodCode, $discount, $phone, $cashGiven
                 ));
             } catch (PDOException $e) {
-                // Trùng mã hóa đơn (UNIQUE, mã 1062) do 2 người bán cùng lúc: thử lại với mã kế tiếp
-                if (($e->errorInfo[1] ?? 0) !== 1062 || $attempt >= 5) {
+                // Trùng mã hóa đơn (UNIQUE, 1062) hoặc deadlock (1213): MySQL đã hủy transaction, thử lại cả giao dịch
+                if (!in_array($e->errorInfo[1] ?? 0, [1062, 1213], true) || $attempt >= 5) {
                     throw $e;
                 }
             }
@@ -264,5 +266,138 @@ class Order extends Model
                 'total' => $total, 'change' => $change, 'points' => $points, 'lines' => count($items)];
     }
 
-    // TODO Bước 3: countFiltered(...) / search(...) – danh sách + lọc; cancel(...) – hủy hóa đơn, hoàn tồn đúng lô.
+    /**
+     * Hủy hóa đơn (admin quyết định ở controller): hoàn tồn đúng lô đã bán, trừ điểm đã cộng, đổi trạng thái
+     * `cancelled` (không xóa). Chỉ hủy được khi hóa đơn còn `completed` và ca của hóa đơn còn mở
+     * (ca đã đóng thì tiền két đã đối chiếu). Khóa theo thứ tự: ca → hóa đơn → sản phẩm → lô (id tăng dần) → khách.
+     * @throws BusinessException nếu không hủy được
+     */
+    public function cancel(int $orderId, int $storeId): void
+    {
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                Database::transaction(fn() => $this->doCancel($orderId, $storeId));
+                return;
+            } catch (PDOException $e) {
+                if (($e->errorInfo[1] ?? 0) !== 1213 || $attempt >= 3) {   // deadlock: thử lại
+                    throw $e;
+                }
+            }
+        }
+    }
+
+    private function doCancel(int $orderId, int $storeId): void
+    {
+        // Đọc shift_id trước (chưa khóa) để khóa ca trước hóa đơn, cùng thứ tự với checkout/đóng ca
+        $stmt = $this->db->prepare('SELECT shift_id FROM orders WHERE id = ? AND store_id = ?');
+        $stmt->execute([$orderId, $storeId]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            throw new BusinessException('Không tìm thấy hóa đơn.');
+        }
+        $shiftStatus = null;
+        if ($row['shift_id'] !== null) {
+            $stmt = $this->db->prepare('SELECT status FROM shifts WHERE id = ? FOR UPDATE');
+            $stmt->execute([$row['shift_id']]);
+            $shiftStatus = $stmt->fetchColumn();
+        }
+        $stmt = $this->db->prepare('SELECT id, status, customer_id, total FROM orders WHERE id = ? AND store_id = ? FOR UPDATE');
+        $stmt->execute([$orderId, $storeId]);
+        $order = $stmt->fetch();
+        if ($order['status'] === 'cancelled') {
+            throw new BusinessException('Hóa đơn này đã được hủy trước đó.');
+        }
+        if ($shiftStatus !== 'open') {
+            throw new BusinessException('Ca của hóa đơn đã đóng nên không thể hủy.');
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT i.batch_id, SUM(i.qty) AS qty, b.product_id
+               FROM order_items i JOIN product_batches b ON b.id = i.batch_id
+              WHERE i.order_id = ? GROUP BY i.batch_id, b.product_id ORDER BY b.product_id, i.batch_id'
+        );
+        $stmt->execute([$orderId]);
+        $rows = $stmt->fetchAll();
+        // Khóa sản phẩm rồi lô theo thứ tự cố định để không deadlock với checkout
+        $productIds = array_values(array_unique(array_column($rows, 'product_id')));
+        if ($productIds) {
+            $marks = implode(',', array_fill(0, count($productIds), '?'));
+            $this->db->prepare("SELECT id FROM products WHERE id IN ($marks) ORDER BY id FOR UPDATE")->execute($productIds);
+        }
+        $restore = $this->db->prepare('UPDATE product_batches SET qty_remaining = qty_remaining + ? WHERE id = ?');
+        foreach ($rows as $r) {
+            $restore->execute([(int) $r['qty'], (int) $r['batch_id']]);
+        }
+
+        if ($order['customer_id'] !== null) {
+            $this->db->prepare('SELECT id FROM customers WHERE id = ? FOR UPDATE')->execute([$order['customer_id']]);
+            $this->db->prepare('UPDATE customers SET points = GREATEST(CAST(points AS SIGNED) - ?, 0) WHERE id = ?')
+                ->execute([self::pointsFor((int) $order['total']), $order['customer_id']]);
+        }
+        $this->db->prepare("UPDATE orders SET status = 'cancelled' WHERE id = ?")->execute([$orderId]);
+    }
+
+    /** Lọc hóa đơn: $userId = 0 là mọi thu ngân; $q tìm theo mã; $method là code phương thức ('' = tất cả); $status completed|cancelled|''. */
+    public function countFiltered(int $storeId, int $userId, string $q, string $method, string $status, string $from, string $to): int
+    {
+        [$where, $params] = $this->filter($storeId, $userId, $q, $method, $status, $from, $to);
+        $stmt = $this->db->prepare('SELECT COUNT(*) ' . $this->listFrom() . " $where");
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** $limit/$offset là int do Paginator tạo nên nối thẳng vào SQL là an toàn. */
+    public function search(int $storeId, int $userId, string $q, string $method, string $status, string $from, string $to, int $limit, int $offset): array
+    {
+        [$where, $params] = $this->filter($storeId, $userId, $q, $method, $status, $from, $to);
+        $stmt = $this->db->prepare(
+            'SELECT o.id, o.code, o.subtotal, o.discount, o.total, o.status, o.created_at,
+                    u.full_name AS user_name, c.full_name AS customer_name, c.phone AS customer_phone, m.name AS method_name '
+            . $this->listFrom() . " $where ORDER BY o.created_at DESC, o.id DESC LIMIT $limit OFFSET $offset"
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /** Mỗi hóa đơn có đúng 1 thanh toán nên các JOIN không nhân bản dòng. */
+    private function listFrom(): string
+    {
+        return 'FROM orders o
+                LEFT JOIN users u ON u.id = o.user_id
+                LEFT JOIN customers c ON c.id = o.customer_id
+                LEFT JOIN payments p ON p.order_id = o.id
+                LEFT JOIN payment_methods m ON m.id = p.method_id';
+    }
+
+    private function filter(int $storeId, int $userId, string $q, string $method, string $status, string $from, string $to): array
+    {
+        $conds = ['o.store_id = ?'];
+        $params = [$storeId];
+        if ($userId > 0) {
+            $conds[] = 'o.user_id = ?';
+            $params[] = $userId;
+        }
+        if ($q !== '') {
+            $conds[] = "o.code LIKE ? ESCAPE '!'";
+            $params[] = self::likePattern($q);
+        }
+        if ($method !== '') {
+            $conds[] = 'm.code = ?';
+            $params[] = $method;
+        }
+        if ($status === 'completed' || $status === 'cancelled') {
+            $conds[] = 'o.status = ?';
+            $params[] = $status;
+        }
+        if ($from !== '') {
+            $conds[] = 'o.created_at >= ?';
+            $params[] = $from . ' 00:00:00';
+        }
+        if ($to !== '') {
+            $conds[] = 'o.created_at <= ?';
+            $params[] = $to . ' 23:59:59';
+        }
+        return ['WHERE ' . implode(' AND ', $conds), $params];
+    }
+
 }

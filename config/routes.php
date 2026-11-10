@@ -91,8 +91,14 @@ $router->post('/shifts/open', [ShiftController::class, 'open'],  ['admin', 'cash
 $router->post('/shifts/{id}/close', [ShiftController::class, 'close'], ['admin', 'cashier']);
 
 // ---- Tuần 4: bán hàng, hóa đơn, báo cáo. Xem docs/PLAN-W4.md ----
-$router->get('/pos', [PosController::class, 'index'], ['admin', 'cashier']);
+$router->get('/pos',          [PosController::class, 'index'],    ['admin', 'cashier']);
+$router->get('/pos/customer', [PosController::class, 'customer'], ['admin', 'cashier']);
+$router->post('/pos/checkout', [PosController::class, 'checkout'], ['admin', 'cashier']);
 
-$router->get('/orders', [OrderController::class, 'index'], ['admin', 'cashier']);
+// Thu ngân chỉ xem/in hóa đơn của mình (kiểm tra trong controller); hủy chỉ admin.
+$router->get('/orders',              [OrderController::class, 'index'],  ['admin', 'cashier']);
+$router->get('/orders/{id}',         [OrderController::class, 'show'],   ['admin', 'cashier']);
+$router->get('/orders/{id}/print',   [OrderController::class, 'print'],  ['admin', 'cashier']);
+$router->post('/orders/{id}/cancel', [OrderController::class, 'cancel'], ['admin']);
 
 $router->get('/reports', [ReportController::class, 'index'], ['admin']);
