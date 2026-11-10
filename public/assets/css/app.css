@@ -11,8 +11,12 @@
 
 .stat-card { border-left: 4px solid var(--bs-success) !important; }
 
-/* In hóa đơn (dùng ở tuần 4) */
+/* In hóa đơn */
+.receipt { max-width: 80mm; margin: 1rem auto; padding: 4mm; background: #fff; font-size: .8rem; font-family: ui-monospace, 'Courier New', monospace; }
+@page { size: 80mm auto; margin: 3mm; }
 @media print {
     .navbar, .sidebar, .no-print { display: none !important; }
     main { padding: 0 !important; }
+    body { background: #fff !important; }
+    .receipt { margin: 0; padding: 0; max-width: none; }
 }
