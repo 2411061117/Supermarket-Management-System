@@ -5,12 +5,13 @@ use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Paginator;
 use App\Core\Session;
+use App\Core\View;
 use App\Models\Shift;
 use App\Models\User;
 
 /**
  * Ca làm việc (admin, thu ngân). Thu ngân chỉ thấy ca của mình; admin thấy mọi ca và lọc được.
- * Tuần 3: mở ca + xem danh sách. Đóng ca/đối chiếu tiền mặt làm ở Tuần 4 (cần doanh thu từ POS).
+ * Mở ca, đóng ca (nhập tiền mặt đếm thực tế, đối chiếu với tiền dự kiến) và xem danh sách.
  */
 class ShiftController extends Controller
 {
@@ -43,10 +44,12 @@ class ShiftController extends Controller
         }
 
         $storeId = (int) $me['store_id'];
+        $current = $this->shifts->findOpenByUser((int) $me['id']);
         $paginator = new Paginator($this->shifts->countFiltered($storeId, $userId, $status, $from, $to), self::PER_PAGE);
         $this->view('shifts/index', [
             'title'     => 'Ca làm việc',
-            'current'   => $this->shifts->findOpenByUser((int) $me['id']),
+            'current'   => $current,
+            'expected'  => $current ? $this->shifts->expectedCash($current) : 0,
             'shifts'    => $this->shifts->search($storeId, $userId, $status, $from, $to, $paginator->limit, $paginator->offset),
             'paginator' => $paginator,
             'isAdmin'   => $isAdmin,
@@ -74,6 +77,34 @@ class ShiftController extends Controller
             redirect('/shifts');
         }
         Session::flash('success', 'Đã mở ca với tiền đầu ca ' . money($data['opening_cash']) . '.');
+        redirect('/shifts');
+    }
+
+    /** Đóng ca: chủ ca hoặc admin (đóng hộ khi nhân viên quên). */
+    public function close(string $id): void
+    {
+        $me = Auth::user();
+        $shift = ctype_digit($id) ? $this->shifts->find((int) $id) : null;
+        if (!$shift || (int) $shift['store_id'] !== (int) $me['store_id']) {
+            View::abort(404);
+        }
+        if ($me['role'] !== 'admin' && (int) $shift['user_id'] !== (int) $me['id']) {
+            View::abort(403);
+        }
+        $data = $this->validate([
+            'closing_cash' => 'required|integer|min:0|max:999999999',
+        ], ['closing_cash' => 'Tiền mặt cuối ca'], '/shifts');
+
+        if (!$this->shifts->close((int) $shift['id'], (int) $data['closing_cash'])) {
+            Session::flash('danger', 'Ca này đã được đóng trước đó.');
+            redirect('/shifts');
+        }
+        $diff = (int) $data['closing_cash'] - $this->shifts->expectedCash($shift);
+        $msg = 'Đã đóng ca #' . $shift['id'] . '. Tiền cuối ca ' . money($data['closing_cash']) . '.';
+        if ($diff !== 0) {
+            $msg .= ' Chênh lệch so với dự kiến: ' . ($diff > 0 ? '+' : '−') . money(abs($diff)) . '.';
+        }
+        Session::flash($diff === 0 ? 'success' : 'warning', $msg);
         redirect('/shifts');
     }
 

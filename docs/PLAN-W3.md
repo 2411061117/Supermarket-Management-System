@@ -43,7 +43,7 @@ Tồn kho của sản phẩm = `SUM(qty_remaining)` các lô còn hạn (lô h�
 - `GET /shifts`: ca của tôi (đang mở hoặc chưa); admin xem được mọi ca (lọc theo ngày, nhân viên, trạng thái).
 - `POST /shifts/open`: nhập tiền đầu ca (`opening_cash` ≥ 0, số nguyên), ghi chú. Chặn nếu người đó đã có ca mở.
 - Hiện trạng thái ca hiện tại trên thanh menu/dashboard ("Ca đang mở từ HH:mm" hoặc nút "Mở ca").
-- **Đóng ca để Tuần 4** (cần doanh thu từ POS để đối chiếu tiền mặt); Tuần 3 chỉ mở ca và liệt kê.
+- **Đóng ca** (bổ sung sau): nhập tiền mặt đếm thực tế, đối chiếu với tiền dự kiến = đầu ca + tiền mặt thu từ hóa đơn của ca (POS Tuần 4 sẽ ghi hóa đơn).
 
 ## Bước 5. Hoàn thiện
 - `seed.sql`: thêm vài lô mẫu (1 lô sắp hết hạn, 1 lô đã hết hạn, 1 sản phẩm tồn thấp, 1 hết hàng) để thấy cảnh báo ngay.

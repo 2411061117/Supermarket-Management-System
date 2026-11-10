@@ -216,7 +216,7 @@ Tài khoản đăng nhập: `admin` / `123456`. Toàn bộ chức năng chỉ d�
 
 ## Tuần 3 — Ca làm việc (`/shifts`)
 
-Đăng nhập `thungan1` hoặc `admin` (`123456`). Đóng ca/đối chiếu tiền mặt làm ở Tuần 4.
+Đăng nhập `thungan1` hoặc `admin` (`123456`). Có thêm đóng ca (các dòng 16–21).
 
 | # | Thao tác | Kết quả mong đợi |
 |---|----------|------------------|
@@ -235,6 +235,12 @@ Tài khoản đăng nhập: `admin` / `123456`. Toàn bộ chức năng chỉ d�
 | 13 | Ca đã đóng / ca dưới 1 giờ / ca đang mở 125 phút | Hiển thị giờ đóng, tiền cuối ca, nhãn "Đã đóng"; "45 phút"; "2 giờ 5 phút" (tính theo đồng hồ CSDL) |
 | 14 | 22 ca: trang 1, trang cuối, `page=999`, `-3`; lọc rồi sang trang 2 | 10 dòng/trang; page sai được kẹp; link giữ bộ lọc |
 | 15 | 6 request mở ca đồng thời của cùng một người | Đúng 1 ca được tạo; không ai có 2 ca đang mở |
+| 16 | Thu ngân đang có ca mở | Thẻ hiện "Tiền mặt dự kiến trong két" (= đầu ca + tiền mặt thu từ hóa đơn hoàn thành của ca, không tính chuyển khoản/ví) và form "Đóng ca" |
+| 17 | Đóng ca với số tiền đếm được (xác nhận hộp thoại) | `status = closed`, có `closed_at`, `closing_cash` đúng; báo chênh lệch (+/−) nếu khác dự kiến (cảnh báo vàng), khớp thì báo xanh; thanh trên về "Chưa mở ca" |
+| 18 | Tiền cuối ca trống, âm, chữ | Báo lỗi, ca vẫn mở |
+| 19 | Đóng ca đã đóng (gửi lại / 2 tab) | Báo "đã được đóng trước đó", `closing_cash` không bị ghi đè |
+| 20 | Thiếu `_csrf`; `kho1` đóng ca; ca không tồn tại; thu ngân đóng ca của người khác | 419; 403; 404; 403 |
+| 21 | Admin xem danh sách | Ca đang mở của người khác có ô nhập tiền + nút "Đóng ca" để đóng hộ |
 
 ## Tuần 3 — Dữ liệu mẫu tồn kho (`database/seed.sql`)
 

@@ -88,6 +88,7 @@ $router->get('/receipts/{id}',   [ReceiptController::class, 'show'],  ['admin', 
 // Ca làm việc (mở ca + xem; đóng ca làm ở Tuần 4)
 $router->get('/shifts',       [ShiftController::class, 'index'], ['admin', 'cashier']);
 $router->post('/shifts/open', [ShiftController::class, 'open'],  ['admin', 'cashier']);
+$router->post('/shifts/{id}/close', [ShiftController::class, 'close'], ['admin', 'cashier']);
 
 // ---- Tuần 4: bán hàng, hóa đơn, báo cáo. Xem docs/PLAN-W4.md ----
 $router->get('/pos', [PosController::class, 'index'], ['admin', 'cashier']);

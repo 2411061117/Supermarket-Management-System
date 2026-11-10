@@ -41,6 +41,37 @@ class Shift extends Model
         });
     }
 
+    /** Tiền mặt dự kiến trong két = tiền đầu ca + tiền mặt thu từ các hóa đơn hoàn thành của ca (0 nếu chưa có POS). */
+    public function expectedCash(array $shift): int
+    {
+        $stmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(p.amount), 0)
+               FROM payments p
+               JOIN payment_methods m ON m.id = p.method_id AND m.code = 'cash'
+               JOIN orders o ON o.id = p.order_id AND o.status = 'completed'
+              WHERE o.shift_id = ?"
+        );
+        $stmt->execute([$shift['id']]);
+        return (int) $shift['opening_cash'] + (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Đóng ca. Trả về true nếu đóng được, false nếu ca không còn mở (đã đóng ở nơi khác).
+     * Khóa dòng ca trong transaction để 2 request đồng thời không đóng ca 2 lần.
+     */
+    public function close(int $shiftId, int $closingCash): bool
+    {
+        return Database::transaction(function () use ($shiftId, $closingCash) {
+            $this->db->prepare('SELECT id FROM shifts WHERE id = ? FOR UPDATE')->execute([$shiftId]);
+            $stmt = $this->db->prepare(
+                "UPDATE shifts SET status = 'closed', closed_at = NOW(), closing_cash = ?
+                  WHERE id = ? AND status = 'open'"
+            );
+            $stmt->execute([$closingCash, $shiftId]);
+            return $stmt->rowCount() === 1;
+        });
+    }
+
     public function countFiltered(int $storeId, int $userId, string $status, string $from, string $to): int
     {
         [$where, $params] = $this->filter($storeId, $userId, $status, $from, $to);
