@@ -85,9 +85,10 @@ $router->get('/receipts/create', [ReceiptController::class, 'create'], ['admin',
 $router->post('/receipts',       [ReceiptController::class, 'store'],  ['admin', 'warehouse']);
 $router->get('/receipts/{id}',   [ReceiptController::class, 'show'],  ['admin', 'warehouse']);
 
-// Ca làm việc (mở ca + xem; đóng ca làm ở Tuần 4)
+// Ca làm việc: mở ca, đóng ca, danh sách và chi tiết (doanh thu, chênh lệch). /shifts/open là POST nên không đụng /shifts/{id}
 $router->get('/shifts',       [ShiftController::class, 'index'], ['admin', 'cashier']);
 $router->post('/shifts/open', [ShiftController::class, 'open'],  ['admin', 'cashier']);
+$router->get('/shifts/{id}',  [ShiftController::class, 'show'],  ['admin', 'cashier']);
 $router->post('/shifts/{id}/close', [ShiftController::class, 'close'], ['admin', 'cashier']);
 
 // ---- Tuần 4: bán hàng, hóa đơn, báo cáo. Xem docs/PLAN-W4.md ----

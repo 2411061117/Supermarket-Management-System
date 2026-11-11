@@ -228,7 +228,7 @@ Tài khoản đăng nhập: `admin` / `123456`. Toàn bộ chức năng chỉ d�
 | 6 | Ghi chú 256 ký tự | Báo lỗi; biên 255 ký tự, tiền 0 và 999.999.999 được chấp nhận |
 | 7 | Form lỗi | Giữ giá trị đã nhập (ghi chú được escape), tải lại thì biến mất |
 | 8 | Ghi chú `<script>…`, `' OR 1=1 --` | Lưu nguyên văn, hiển thị escape, không lỗi SQL |
-| 9 | Thiếu/sai `_csrf`; GET `/shifts/open`; `/shifts/1` | 419 (không tạo ca); 404; 404 |
+| 9 | Thiếu/sai `_csrf`; GET `/shifts/open`; `/shifts/999999` | 419 (không tạo ca); 404; 404 |
 | 10 | Thu ngân xem danh sách, kể cả thêm `?user_id=<admin>` | Chỉ thấy ca của chính mình, không lộ tên người khác, không có ô lọc nhân viên |
 | 11 | Admin xem danh sách | Thấy mọi ca kèm tên + username; lọc nhân viên, trạng thái, khoảng ngày mở ca; giá trị lạ (`user_id=abc`, `status=bogus`, dạng mảng, ngày sai) coi như không lọc |
 | 12 | Khoảng ngày ngược | Tự đổi chỗ + thông báo |
@@ -241,6 +241,55 @@ Tài khoản đăng nhập: `admin` / `123456`. Toàn bộ chức năng chỉ d�
 | 19 | Đóng ca đã đóng (gửi lại / 2 tab) | Báo "đã được đóng trước đó", `closing_cash` không bị ghi đè |
 | 20 | Thiếu `_csrf`; `kho1` đóng ca; ca không tồn tại; thu ngân đóng ca của người khác | 419; 403; 404; 403 |
 | 21 | Admin xem danh sách | Ca đang mở của người khác có ô nhập tiền + nút "Đóng ca" để đóng hộ |
+
+## Tuần 4 — Đóng ca hoàn chỉnh (`/shifts`, `/shifts/{id}`)
+
+Cần cột `shifts.expected_cash` (import lại `schema.sql`, hoặc DB cũ: `ALTER TABLE shifts ADD COLUMN expected_cash DECIMAL(12,0) NULL AFTER closing_cash;`).
+
+| # | Thao tác | Kết quả mong đợi |
+|---|----------|------------------|
+| 1 | Thu ngân có ca mở, đã bán 1 đơn tiền mặt + 1 đơn chuyển khoản, vào `/shifts` | Thẻ "Doanh thu ca này": số hóa đơn, tổng, từng phương thức; "Tiền mặt dự kiến" = đầu ca + chỉ tiền mặt |
+| 2 | Admin hủy 1 hóa đơn của ca đang mở | Hóa đơn hủy không tính vào doanh thu/tiền dự kiến; thẻ ghi "1 hóa đơn hủy không tính" |
+| 3 | Đóng ca nhập đúng tiền dự kiến | Chuyển sang `/shifts/{id}`, báo xanh; `expected_cash` được lưu; chênh lệch 0 "(khớp)" |
+| 4 | Đóng ca nhập thiếu/thừa | Báo vàng kèm chênh lệch; trang chi tiết và danh sách hiện chênh lệch đỏ (−/+), "thiếu tiền"/"thừa tiền" |
+| 5 | Ca đã đóng, thử POS bán/hủy hóa đơn của ca | Bị chặn; doanh thu và chênh lệch ca không đổi |
+| 6 | Đóng ca trong lúc thanh toán đang chạy (đồng thời) | Đóng ca chờ thanh toán xong; hóa đơn đó nằm trong `expected_cash`; hoặc thanh toán bị từ chối vì ca đã đóng, không có hóa đơn "lọt" ngoài ca |
+| 7 | 2 request đóng cùng 1 ca | Một cái thành công, cái kia báo "đã được đóng trước đó"; `expected_cash`/`closing_cash` không bị ghi đè |
+| 8 | Thu ngân mở `/shifts/{id}` của người khác; ca không tồn tại; `abc` | 403; 404; 404. Admin xem được mọi ca |
+| 9 | Trang chi tiết ca không có hóa đơn | "Ca này chưa có hóa đơn", chênh lệch "—" khi ca còn mở |
+| 10 | Ca đóng trước khi có cột `expected_cash` (NULL) | Chi tiết ca tính lại từ hóa đơn; danh sách hiện "—" ở cột chênh lệch |
+
+## Tuần 4 — Báo cáo (`/reports`, chỉ admin)
+
+| # | Thao tác | Kết quả mong đợi |
+|---|----------|------------------|
+| 1 | `thungan1`, `kho1` vào `/reports`; chưa đăng nhập | 403; 403; về `/login`. Dashboard chỉ admin thấy nút "Xem báo cáo" |
+| 2 | Admin vào `/reports` không tham số | Mặc định 7 ngày gần nhất (hôm nay và 6 ngày trước); biểu đồ có đúng 7 cột, ngày không bán = 0 |
+| 3 | Có 2 đơn hoàn thành + 1 đơn đã hủy trong khoảng | Doanh thu, số hóa đơn, trung bình chỉ tính 2 đơn; đơn hủy không xuất hiện ở bất kỳ bảng nào |
+| 4 | Lợi nhuận gộp | = doanh thu − Σ(SL × giá vốn lô đã bán); khớp với tính tay |
+| 5 | Theo phương thức / theo thu ngân | Tổng các dòng = doanh thu (đơn thanh toán 1 phương thức); sắp giảm dần |
+| 6 | Top 10 theo SL / theo doanh thu | Gộp các dòng tách theo lô của cùng sản phẩm; tối đa 10 dòng; thứ tự đúng |
+| 7 | `from` > `to` | Tự đổi chỗ + thông báo |
+| 8 | Khoảng > 366 ngày (vd `2020-01-01` → hôm nay) | Rút còn 366 ngày tính đến "Đến ngày" + thông báo |
+| 9 | Giá trị lạ: `from=abc`, `from[]=1`, `2026-02-30` | Coi như không nhập, dùng mặc định, không lỗi |
+| 10 | Chỉ nhập `from` (hoặc chỉ `to`) | Tự suy ra đầu còn lại (7 ngày, không vượt quá hôm nay) |
+| 11 | Hóa đơn lúc 23:59:59 ngày `to` và 00:00:00 ngày kế tiếp | Chỉ đơn đầu nằm trong khoảng |
+| 12 | Khoảng không có đơn | Thẻ = 0, các bảng "Chưa có dữ liệu", biểu đồ trống, không lỗi chia 0 |
+| 13 | Dashboard "Doanh thu hôm nay" | Chỉ tính hóa đơn `completed` của hôm nay; hủy đơn thì giảm theo |
+
+## Tuần 4 — Dữ liệu mẫu hóa đơn (`database/seed.sql`)
+
+Sau khi import `schema.sql` + `seed.sql`, đăng nhập `admin`.
+
+| # | Kiểm tra | Kết quả mong đợi |
+|---|----------|------------------|
+| 1 | `/shifts` | 3 ca đã đóng của thungan1; chênh lệch: 0 (xanh), −1.000 ₫ (đỏ), 0; không có ca đang mở |
+| 2 | `/orders` | 7 hóa đơn, 1 hóa đơn "Đã hủy" (gạch ngang); hóa đơn đã hủy không có nút Hủy |
+| 3 | `/reports?from=<9 ngày trước>&to=<hôm nay>` | 6 hóa đơn, doanh thu 654.000 ₫ (hóa đơn hủy không tính), trung bình 109.000 ₫; theo phương thức: Tiền mặt 444.000 ₫, Chuyển khoản 210.000 ₫ |
+| 4 | Lợi nhuận gộp trong khoảng trên | 654.000 − giá vốn (40 lon × 9.000 + 18 mì × 7.000 = 486.000) = 168.000 ₫ |
+| 5 | Top sản phẩm | Theo SL: Coca 40, Mì ly 18; theo doanh thu: Coca 480.000 (chưa trừ giảm giá 6.000), Mì ly 180.000 |
+| 6 | `/inventory` sau import | Số tồn không đổi so với mục "Dữ liệu mẫu tồn kho" (đã khớp số đã bán) |
+| 7 | Hóa đơn #2 | Tạm tính 96.000, giảm giá 6.000, tổng 90.000 ₫, chuyển khoản; đóng ca của hóa đơn đã đóng nên không hủy được |
 
 ## Tuần 3 — Dữ liệu mẫu tồn kho (`database/seed.sql`)
 

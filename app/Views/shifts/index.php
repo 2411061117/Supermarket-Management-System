@@ -26,6 +26,15 @@ $fmtDuration = function (int $min): string {
                 <dd class="col-sm-7 mb-0"><?= ($current['note'] ?? '') !== '' ? e($current['note']) : '—' ?></dd>
             </dl>
             <hr>
+            <div class="mb-3">
+                <div class="fw-semibold mb-1">Doanh thu ca này</div>
+                <div><?= (int) $summary['orders_count'] ?> hóa đơn · <strong><?= money($summary['revenue']) ?></strong>
+                    <?php if ($summary['cancelled_count'] > 0): ?><span class="text-muted small">(<?= (int) $summary['cancelled_count'] ?> hóa đơn hủy không tính)</span><?php endif; ?></div>
+                <?php foreach ($summary['methods'] as $m): ?>
+                    <div class="small text-muted"><?= e($m['name']) ?>: <?= money($m['amount']) ?> (<?= (int) $m['orders_count'] ?> hóa đơn)</div>
+                <?php endforeach; ?>
+                <a href="<?= url('/shifts/' . (int) $current['id']) ?>" class="small">Xem chi tiết ca</a>
+            </div>
             <form method="post" action="<?= url('/shifts/' . (int) $current['id'] . '/close') ?>" novalidate data-once
                   onsubmit="return confirm('Đóng ca hiện tại? Sau khi đóng không thể mở lại.')">
                 <?= csrf_field() ?>
@@ -110,8 +119,10 @@ $fmtDuration = function (int $min): string {
                     <th>Thời lượng</th>
                     <th class="text-end">Tiền đầu ca</th>
                     <th class="text-end">Tiền cuối ca</th>
+                    <th class="text-end">Chênh lệch</th>
                     <th>Trạng thái</th>
                     <th>Ghi chú</th>
+                    <th class="text-end">Chi tiết</th>
                 </tr>
             </thead>
             <tbody>
@@ -124,6 +135,12 @@ $fmtDuration = function (int $min): string {
                     <td class="text-nowrap"><?= e($fmtDuration((int) $s['minutes'])) ?></td>
                     <td class="text-end text-nowrap"><?= money($s['opening_cash']) ?></td>
                     <td class="text-end text-nowrap"><?= $s['closing_cash'] === null ? '—' : money($s['closing_cash']) ?></td>
+                    <td class="text-end text-nowrap">
+                        <?php if ($s['status'] === 'closed' && $s['closing_cash'] !== null && $s['expected_cash'] !== null):
+                            $d = (int) $s['closing_cash'] - (int) $s['expected_cash']; ?>
+                            <span class="<?= $d === 0 ? 'text-success' : 'text-danger' ?>"><?= $d > 0 ? '+' : ($d < 0 ? '−' : '') ?><?= money(abs($d)) ?></span>
+                        <?php else: ?>—<?php endif; ?>
+                    </td>
                     <td>
                         <?php if ($s['status'] === 'open'): ?>
                             <span class="badge text-bg-success">Đang mở</span>
@@ -140,11 +157,12 @@ $fmtDuration = function (int $min): string {
                         <?php endif; ?>
                     </td>
                     <td><?= ($s['note'] ?? '') !== '' ? e($s['note']) : '—' ?></td>
+                    <td class="text-end"><a href="<?= url('/shifts/' . (int) $s['id']) ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem</a></td>
                 </tr>
             <?php endforeach; ?>
             <?php if (!$shifts): ?>
                 <tr>
-                    <td colspan="<?= $isAdmin ? 9 : 8 ?>" class="text-center text-muted py-4">
+                    <td colspan="<?= $isAdmin ? 11 : 10 ?>" class="text-center text-muted py-4">
                         <?= (($isAdmin && $userId > 0) || $status !== '' || $from !== '' || $to !== '') ? 'Không tìm thấy ca phù hợp.' : 'Chưa có ca nào.' ?>
                     </td>
                 </tr>
