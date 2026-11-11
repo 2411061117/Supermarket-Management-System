@@ -122,6 +122,7 @@ CREATE TABLE shifts (
     closed_at     DATETIME NULL,
     opening_cash  DECIMAL(12,0) NOT NULL DEFAULT 0,
     closing_cash  DECIMAL(12,0) NULL,             -- tiền mặt đếm thực tế cuối ca
+    expected_cash DECIMAL(12,0) NULL,             -- tiền mặt dự kiến lúc đóng ca; chênh lệch = closing_cash - expected_cash
     status        ENUM('open','closed') NOT NULL DEFAULT 'open',
     note          VARCHAR(255),
     CONSTRAINT fk_shifts_store FOREIGN KEY (store_id) REFERENCES stores(id),

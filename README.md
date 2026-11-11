@@ -5,15 +5,15 @@ Bài thực hành môn Phát triển phần mềm trên nền web — PHP 8 thu�
 ## Cài đặt (XAMPP)
 1. Yêu cầu **PHP ≥ 8.1** (XAMPP 8.1+), bật `mod_rewrite` (mặc định đã bật).
 2. Copy thư mục `BTHT6` vào `C:\xampp\htdocs\`.
-3. Mở phpMyAdmin → tab **Import** → chạy lần lượt `database/schema.sql` rồi `database/seed.sql`.
+3. Mở phpMyAdmin → tab **Import** → chạy lần lượt `database/schema.sql` rồi `database/seed.sql` (seed có sẵn 3 ca đã đóng và 7 hóa đơn mẫu để xem báo cáo).
 4. Sửa `config/config.php` nếu MySQL có mật khẩu.
 5. Truy cập: <http://localhost/BTHT6/public/>
 
 ### Tài khoản mẫu (mật khẩu `123456`)
 | Username | Vai trò | Được vào |
 |---|---|---|
-| `admin` | Quản lý | Tất cả (kể cả Loại hàng, ĐVT, NCC, Sản phẩm, Nhân viên) |
-| `thungan1` | Thu ngân | Tổng quan, POS, Ca làm việc |
+| `admin` | Quản lý | Tất cả (kể cả Loại hàng, ĐVT, NCC, Sản phẩm, Nhân viên, Báo cáo, hủy hóa đơn) |
+| `thungan1` | Thu ngân | Tổng quan, Bán hàng (POS), Hóa đơn (của mình), Ca làm việc |
 | `kho1` | NV kho | Tổng quan, Kho hàng (tồn kho, phiếu nhập) |
 
 ## Cấu trúc
@@ -22,7 +22,7 @@ public/          Front controller (index.php), .htaccess, assets
 app/Core/        Router, Database (PDO), Model, Controller, View, Auth, Session, Csrf, Validator, Paginator, Uploader
 app/Controllers/ Xử lý request
 app/Models/      Truy vấn CSDL (prepared statements)
-app/Views/       Giao diện (layouts/, partials/, auth/, dashboard/, errors/, units/, categories/, suppliers/, products/, users/)
+app/Views/       Giao diện (layouts/, partials/, auth/, dashboard/, errors/, units/, categories/, suppliers/, products/, users/, pos/, orders/, shifts/, reports/)
 config/          config.php, routes.php (khai báo route + vai trò)
 database/        schema.sql, seed.sql
 docs/            Tài liệu phân tích thiết kế, test case
@@ -38,4 +38,4 @@ docs/            Tài liệu phân tích thiết kế, test case
 - [x] Tuần 1: Khung MVC, CSDL, đăng nhập, phân quyền, dashboard
 - [x] Tuần 2: CRUD loại hàng, ĐVT, nhà cung cấp, sản phẩm (upload ảnh, API tìm kiếm), tài khoản nhân viên
 - [x] Tuần 3: Nhập kho theo lô/HSD (phiếu nhập nhiều dòng), tồn kho theo FEFO, cảnh báo tồn thấp/hết hạn, mở ca
-- [ ] Tuần 4: POS (FEFO, thanh toán, in hóa đơn), đóng ca, báo cáo
+- [x] Tuần 4: POS (FEFO, thanh toán, in hóa đơn), hủy hóa đơn, đóng ca (chênh lệch tiền mặt), báo cáo doanh thu/top sản phẩm

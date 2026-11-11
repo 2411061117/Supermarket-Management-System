@@ -50,6 +50,7 @@ class ShiftController extends Controller
             'title'     => 'Ca làm việc',
             'current'   => $current,
             'expected'  => $current ? $this->shifts->expectedCash($current) : 0,
+            'summary'   => $current ? $this->shifts->summary((int) $current['id']) : null,
             'shifts'    => $this->shifts->search($storeId, $userId, $status, $from, $to, $paginator->limit, $paginator->offset),
             'paginator' => $paginator,
             'isAdmin'   => $isAdmin,
@@ -95,17 +96,41 @@ class ShiftController extends Controller
             'closing_cash' => 'required|integer|min:0|max:999999999',
         ], ['closing_cash' => 'Tiền mặt cuối ca'], '/shifts');
 
-        if (!$this->shifts->close((int) $shift['id'], (int) $data['closing_cash'])) {
+        $expected = $this->shifts->close((int) $shift['id'], (int) $data['closing_cash']);
+        if ($expected === null) {
             Session::flash('danger', 'Ca này đã được đóng trước đó.');
             redirect('/shifts');
         }
-        $diff = (int) $data['closing_cash'] - $this->shifts->expectedCash($shift);
+        $diff = (int) $data['closing_cash'] - $expected;
         $msg = 'Đã đóng ca #' . $shift['id'] . '. Tiền cuối ca ' . money($data['closing_cash']) . '.';
         if ($diff !== 0) {
             $msg .= ' Chênh lệch so với dự kiến: ' . ($diff > 0 ? '+' : '−') . money(abs($diff)) . '.';
         }
         Session::flash($diff === 0 ? 'success' : 'warning', $msg);
-        redirect('/shifts');
+        redirect('/shifts/' . (int) $shift['id']);
+    }
+
+    /** Chi tiết ca: doanh thu, tổng theo phương thức, chênh lệch tiền mặt, danh sách hóa đơn. Thu ngân chỉ xem ca của mình. */
+    public function show(string $id): void
+    {
+        $me = Auth::user();
+        $shift = ctype_digit($id) ? $this->shifts->findWithUser((int) $id) : null;
+        if (!$shift || (int) $shift['store_id'] !== (int) $me['store_id']) {
+            View::abort(404);
+        }
+        if ($me['role'] !== 'admin' && (int) $shift['user_id'] !== (int) $me['id']) {
+            View::abort(403);
+        }
+        $isOpen = $shift['status'] === 'open';
+        $expected = $isOpen ? $this->shifts->expectedCash($shift) : (int) ($shift['expected_cash'] ?? $this->shifts->expectedCash($shift));
+        $this->view('shifts/show', [
+            'title'      => 'Ca #' . $shift['id'],
+            'shift'      => $shift,
+            'summary'    => $this->shifts->summary((int) $shift['id']),
+            'orders'     => $this->shifts->orders((int) $shift['id']),
+            'expected'   => $expected,
+            'difference' => $isOpen || $shift['closing_cash'] === null ? null : (int) $shift['closing_cash'] - $expected,
+        ]);
     }
 
     /** Ngày hợp lệ dạng Y-m-d, ngược lại '' (không lọc). */

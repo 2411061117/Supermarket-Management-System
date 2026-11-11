@@ -56,19 +56,86 @@ class Shift extends Model
     }
 
     /**
-     * Đóng ca. Trả về true nếu đóng được, false nếu ca không còn mở (đã đóng ở nơi khác).
-     * Khóa dòng ca trong transaction để 2 request đồng thời không đóng ca 2 lần.
+     * Doanh thu của ca: số hóa đơn hoàn thành, tổng tiền, số hóa đơn đã hủy (không tính vào doanh thu)
+     * và tổng thu theo từng phương thức thanh toán (chỉ hóa đơn hoàn thành).
      */
-    public function close(int $shiftId, int $closingCash): bool
+    public function summary(int $shiftId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(status = 'completed'), 0) AS orders_count,
+                    COALESCE(SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END), 0) AS revenue,
+                    COALESCE(SUM(status = 'cancelled'), 0) AS cancelled_count
+               FROM orders WHERE shift_id = ?"
+        );
+        $stmt->execute([$shiftId]);
+        $row = $stmt->fetch();
+
+        $stmt = $this->db->prepare(
+            "SELECT m.code, m.name, COUNT(DISTINCT o.id) AS orders_count, SUM(p.amount) AS amount
+               FROM payments p
+               JOIN payment_methods m ON m.id = p.method_id
+               JOIN orders o ON o.id = p.order_id AND o.status = 'completed'
+              WHERE o.shift_id = ?
+              GROUP BY m.id, m.code, m.name
+              ORDER BY m.id"
+        );
+        $stmt->execute([$shiftId]);
+
+        return [
+            'orders_count'    => (int) $row['orders_count'],
+            'revenue'         => (int) $row['revenue'],
+            'cancelled_count' => (int) $row['cancelled_count'],
+            'methods'         => $stmt->fetchAll(),
+        ];
+    }
+
+    /** Hóa đơn của ca (mới nhất trước), kèm phương thức thanh toán, để hiển thị ở trang chi tiết ca. */
+    public function orders(int $shiftId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT o.id, o.code, o.total, o.status, o.created_at,
+                    (SELECT GROUP_CONCAT(m.name ORDER BY m.id SEPARATOR ', ')
+                       FROM payments p JOIN payment_methods m ON m.id = p.method_id
+                      WHERE p.order_id = o.id) AS method_name
+               FROM orders o WHERE o.shift_id = ?
+              ORDER BY o.created_at DESC, o.id DESC"
+        );
+        $stmt->execute([$shiftId]);
+        return $stmt->fetchAll();
+    }
+
+    /** Ca kèm tên nhân viên (null nếu không có). Không lọc cửa hàng: controller tự kiểm tra. */
+    public function findWithUser(int $id): ?array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT s.*, u.full_name AS user_name, u.username,
+                    TIMESTAMPDIFF(MINUTE, s.opened_at, COALESCE(s.closed_at, NOW())) AS minutes
+               FROM shifts s JOIN users u ON u.id = s.user_id WHERE s.id = ?"
+        );
+        $stmt->execute([$id]);
+        return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * Đóng ca. Trả về tiền mặt dự kiến tại thời điểm đóng, hoặc null nếu ca không còn mở (đã đóng ở nơi khác).
+     * Khóa dòng ca trong transaction: thanh toán/hủy hóa đơn cũng khóa dòng ca nên đóng ca phải đợi giao dịch
+     * đang dở xong, và sau khi đóng không còn hóa đơn nào vào ca được nữa. Tiền dự kiến được tính và lưu
+     * (expected_cash) trong cùng transaction; chênh lệch = closing_cash − expected_cash.
+     */
+    public function close(int $shiftId, int $closingCash): ?int
     {
         return Database::transaction(function () use ($shiftId, $closingCash) {
-            $this->db->prepare('SELECT id FROM shifts WHERE id = ? FOR UPDATE')->execute([$shiftId]);
-            $stmt = $this->db->prepare(
-                "UPDATE shifts SET status = 'closed', closed_at = NOW(), closing_cash = ?
-                  WHERE id = ? AND status = 'open'"
-            );
-            $stmt->execute([$closingCash, $shiftId]);
-            return $stmt->rowCount() === 1;
+            $stmt = $this->db->prepare('SELECT * FROM shifts WHERE id = ? FOR UPDATE');
+            $stmt->execute([$shiftId]);
+            $shift = $stmt->fetch();
+            if (!$shift || $shift['status'] !== 'open') {
+                return null;
+            }
+            $expected = $this->expectedCash($shift);
+            $this->db->prepare(
+                "UPDATE shifts SET status = 'closed', closed_at = NOW(), closing_cash = ?, expected_cash = ? WHERE id = ?"
+            )->execute([$closingCash, $expected, $shiftId]);
+            return $expected;
         });
     }
 

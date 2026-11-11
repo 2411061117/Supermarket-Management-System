@@ -1,4 +1,9 @@
-<h1 class="h4 mb-4">Tổng quan hôm nay</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <h1 class="h4 mb-0">Tổng quan hôm nay</h1>
+    <?php if (App\Core\Auth::hasRole('admin')): ?>
+        <a href="<?= url('/reports') ?>" class="btn btn-outline-success btn-sm"><i class="bi bi-bar-chart"></i> Xem báo cáo</a>
+    <?php endif; ?>
+</div>
 
 <div class="row g-3 mb-4">
     <div class="col-12 col-sm-6 col-xl-3">

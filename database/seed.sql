@@ -58,3 +58,38 @@ INSERT INTO payment_methods (code, name) VALUES
 
 INSERT INTO customers (phone, full_name, points) VALUES
 ('0987654321', 'Phạm Khách Quen', 120);
+
+-- ---------- Hóa đơn mẫu (Tuần 4) ----------
+-- 3 ca đã đóng của thungan1 (user 2) ở các ngày khác nhau để trang /reports có số liệu. Không có ca đang mở,
+-- nên đăng nhập thu ngân vẫn phải mở ca trước khi bán. Số lượng bán KHỚP với tồn ở product_batches phía trên
+-- (qty_received − qty_remaining): CC-2412 bán 20, CC-2501 bán 20, MI-2501 bán 18. Hóa đơn hủy đã hoàn kho nên không tính.
+-- expected_cash = tiền đầu ca + tiền mặt thu được; chênh lệch = closing_cash − expected_cash.
+INSERT INTO shifts (id, store_id, user_id, opened_at, closed_at, opening_cash, closing_cash, expected_cash, status, note) VALUES
+(1, 1, 2, CURDATE() - INTERVAL 8 DAY + INTERVAL 8 HOUR, CURDATE() - INTERVAL 8 DAY + INTERVAL 16 HOUR, 500000, 644000, 644000, 'closed', 'Ca sáng - khớp tiền'),
+(2, 1, 2, CURDATE() - INTERVAL 5 DAY + INTERVAL 8 HOUR, CURDATE() - INTERVAL 5 DAY + INTERVAL 16 HOUR, 300000, 419000, 420000, 'closed', 'Ca sáng - thiếu 1.000 ₫'),
+(3, 1, 2, CURDATE() - INTERVAL 2 DAY + INTERVAL 8 HOUR, CURDATE() - INTERVAL 2 DAY + INTERVAL 16 HOUR, 200000, 380000, 380000, 'closed', 'Ca có 1 hóa đơn hủy');
+
+INSERT INTO orders (id, code, store_id, channel, shift_id, user_id, customer_id, subtotal, discount, total, status, created_at) VALUES
+(1, CONCAT('HD-', DATE_FORMAT(CURDATE() - INTERVAL 8 DAY, '%Y%m%d'), '-0001'), 1, 'pos', 1, 2, NULL, 144000,    0, 144000, 'completed', CURDATE() - INTERVAL 8 DAY + INTERVAL 9 HOUR),
+(2, CONCAT('HD-', DATE_FORMAT(CURDATE() - INTERVAL 8 DAY, '%Y%m%d'), '-0002'), 1, 'pos', 1, 2, NULL,  96000, 6000,  90000, 'completed', CURDATE() - INTERVAL 8 DAY + INTERVAL 11 HOUR),
+(3, CONCAT('HD-', DATE_FORMAT(CURDATE() - INTERVAL 5 DAY, '%Y%m%d'), '-0001'), 1, 'pos', 2, 2, NULL, 120000,    0, 120000, 'completed', CURDATE() - INTERVAL 5 DAY + INTERVAL 10 HOUR),
+(4, CONCAT('HD-', DATE_FORMAT(CURDATE() - INTERVAL 5 DAY, '%Y%m%d'), '-0002'), 1, 'pos', 2, 2, NULL, 120000,    0, 120000, 'completed', CURDATE() - INTERVAL 5 DAY + INTERVAL 14 HOUR),
+(5, CONCAT('HD-', DATE_FORMAT(CURDATE() - INTERVAL 2 DAY, '%Y%m%d'), '-0001'), 1, 'pos', 3, 2, NULL, 100000,    0, 100000, 'completed', CURDATE() - INTERVAL 2 DAY + INTERVAL 9 HOUR),
+(6, CONCAT('HD-', DATE_FORMAT(CURDATE() - INTERVAL 2 DAY, '%Y%m%d'), '-0002'), 1, 'pos', 3, 2, NULL,  80000,    0,  80000, 'completed', CURDATE() - INTERVAL 2 DAY + INTERVAL 13 HOUR),
+(7, CONCAT('HD-', DATE_FORMAT(CURDATE() - INTERVAL 2 DAY, '%Y%m%d'), '-0003'), 1, 'pos', 3, 2, NULL,  20000,    0,  20000, 'cancelled', CURDATE() - INTERVAL 2 DAY + INTERVAL 15 HOUR);
+
+-- batch_id: 2 = CC-2501, 3 = CC-2412, 4 = MI-2501
+INSERT INTO order_items (order_id, batch_id, qty, unit_price) VALUES
+(1, 3, 12, 12000), (2, 3, 8, 12000),
+(3, 2, 10, 12000), (4, 2, 10, 12000),
+(5, 4, 10, 10000), (6, 4,  8, 10000), (7, 4, 2, 10000);
+
+-- method_id: 1 = Tiền mặt, 2 = Chuyển khoản
+INSERT INTO payments (order_id, method_id, amount, paid_at) VALUES
+(1, 1, 144000, CURDATE() - INTERVAL 8 DAY + INTERVAL 9 HOUR),
+(2, 2,  90000, CURDATE() - INTERVAL 8 DAY + INTERVAL 11 HOUR),
+(3, 1, 120000, CURDATE() - INTERVAL 5 DAY + INTERVAL 10 HOUR),
+(4, 2, 120000, CURDATE() - INTERVAL 5 DAY + INTERVAL 14 HOUR),
+(5, 1, 100000, CURDATE() - INTERVAL 2 DAY + INTERVAL 9 HOUR),
+(6, 1,  80000, CURDATE() - INTERVAL 2 DAY + INTERVAL 13 HOUR),
+(7, 1,  20000, CURDATE() - INTERVAL 2 DAY + INTERVAL 15 HOUR);
