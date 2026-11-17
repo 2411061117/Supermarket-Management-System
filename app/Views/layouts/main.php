@@ -36,47 +36,17 @@ $menu = [
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
 </head>
-<body class="bg-body-tertiary">
-<nav class="navbar navbar-dark bg-success sticky-top px-3">
-    <button class="btn btn-outline-light d-lg-none me-2" type="button"
-            data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Mở menu">
-        <i class="bi bi-list"></i>
-    </button>
-    <a class="navbar-brand fw-semibold me-auto" href="<?= url('/') ?>">
-        <i class="bi bi-shop"></i> <?= e(App::config('app.name')) ?>
-    </a>
-    <?php if (Auth::hasRole('admin', 'cashier')): ?>
-        <?php $myShift = (new Shift())->findOpenByUser((int) $user['id']); ?>
-        <a href="<?= url('/shifts') ?>" class="btn btn-sm me-2 <?= $myShift ? 'btn-light text-success' : 'btn-warning' ?>">
-            <i class="bi bi-clock-history"></i>
-            <?= $myShift ? 'Ca mở từ ' . e(date('H:i', strtotime($myShift['opened_at']))) : 'Chưa mở ca' ?>
-        </a>
-    <?php endif; ?>
-    <div class="dropdown">
-        <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-            <i class="bi bi-person-circle"></i>
-            <span class="d-none d-sm-inline"><?= e($user['full_name']) ?></span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-            <li><span class="dropdown-item-text small text-muted"><?= e($user['role_name']) ?></span></li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-                <form method="post" action="<?= url('/logout') ?>">
-                    <?= csrf_field() ?>
-                    <button class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
-                </form>
-            </li>
-        </ul>
-    </div>
-</nav>
-
-<div class="d-flex">
-    <aside class="offcanvas-lg offcanvas-start sidebar bg-white border-end" id="sidebar" tabindex="-1">
-        <div class="offcanvas-header d-lg-none">
-            <h5 class="offcanvas-title">Menu</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"></button>
+<body class="app-body">
+<div class="app-shell">
+    <aside class="offcanvas-lg offcanvas-start sidebar" id="sidebar" tabindex="-1">
+        <div class="sidebar-brand">
+            <a href="<?= url('/') ?>" class="d-flex align-items-center gap-2 text-decoration-none">
+                <span class="brand-mark"><?= e(mb_strtoupper(mb_substr(App::config('app.name'), 0, 1))) ?></span>
+                <span class="brand-name">Quản lý<br>cửa hàng</span>
+            </a>
+            <button type="button" class="btn-close btn-close-white d-lg-none ms-auto" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Đóng"></button>
         </div>
-        <nav class="nav nav-pills flex-column p-2">
+        <nav class="nav flex-column sidebar-nav">
             <?php foreach ($menu as $i => $item): ?>
                 <?php
                 [$href, $icon, $label, $roles] = $item;
@@ -87,31 +57,39 @@ $menu = [
                 ?>
                 <?php if ($children): ?>
                     <?php $open = array_filter($children, fn($c) => active($c[0]) !== ''); ?>
-                    <a class="nav-link d-flex justify-content-between align-items-center <?= $open ? 'fw-semibold text-success' : '' ?>"
+                    <a class="nav-link <?= $open ? 'is-current' : '' ?>"
                        data-bs-toggle="collapse" href="#menu-group-<?= $i ?>" role="button"
                        aria-expanded="<?= $open ? 'true' : 'false' ?>" aria-controls="menu-group-<?= $i ?>">
-                        <span><i class="bi bi-<?= $icon ?> me-2"></i><?= e($label) ?></span>
+                        <span class="nav-dot"></span><span class="flex-grow-1"><?= e($label) ?></span>
                         <i class="bi bi-chevron-down small"></i>
                     </a>
                     <div class="collapse <?= $open ? 'show' : '' ?>" id="menu-group-<?= $i ?>">
-                        <div class="nav flex-column ms-3">
+                        <div class="nav flex-column sub-nav">
                             <?php foreach ($children as [$childHref, $childLabel]): ?>
-                                <a class="nav-link py-1 <?= active($childHref) ?>" href="<?= url($childHref) ?>">
-                                    <?= e($childLabel) ?>
-                                </a>
+                                <a class="nav-link <?= active($childHref) ?>" href="<?= url($childHref) ?>"><?= e($childLabel) ?></a>
                             <?php endforeach; ?>
                         </div>
                     </div>
                 <?php else: ?>
                     <a class="nav-link <?= active($href) ?>" href="<?= url($href) ?>">
-                        <i class="bi bi-<?= $icon ?> me-2"></i><?= e($label) ?>
+                        <span class="nav-dot"></span><?= e($label) ?>
                     </a>
                 <?php endif; ?>
             <?php endforeach; ?>
         </nav>
     </aside>
 
-    <main class="flex-grow-1 p-3 p-md-4 min-vw-0">
+    <main class="app-main">
+        <?php if (empty($userbarInline)): ?>
+            <div class="d-flex align-items-center mb-3">
+                <button class="btn btn-outline-success d-lg-none" type="button"
+                        data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Mở menu">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="ms-auto"><?php App\Core\View::partial('userbar'); ?></div>
+            </div>
+        <?php endif; ?>
+
         <?php foreach (Session::pullFlash() as $f): ?>
             <div class="alert alert-<?= e($f['type']) ?> alert-dismissible fade show">
                 <?= e($f['message']) ?>
