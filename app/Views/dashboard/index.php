@@ -5,7 +5,7 @@
     </div>
     <div class="d-flex align-items-center gap-2">
         <button class="btn btn-outline-success d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Mở menu"><i class="bi bi-list"></i></button>
-        <?php App\Core\View::partial('userbar'); ?>
+        <?php \App\Core\View::partial('userbar'); ?>
     </div>
 </div>
 

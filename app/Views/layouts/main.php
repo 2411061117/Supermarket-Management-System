@@ -2,6 +2,7 @@
 use App\Core\App;
 use App\Core\Auth;
 use App\Core\Session;
+use App\Core\View;
 use App\Models\Shift;
 
 $user = Auth::user();
@@ -86,7 +87,7 @@ $menu = [
                         data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Mở menu">
                     <i class="bi bi-list"></i>
                 </button>
-                <div class="ms-auto"><?php App\Core\View::partial('userbar'); ?></div>
+                <div class="ms-auto"><?php View::partial('userbar'); ?></div>
             </div>
         <?php endif; ?>
 
