@@ -14,6 +14,8 @@ class DashboardController extends Controller
 
         $this->view('dashboard/index', [
             'title'        => 'Tổng quan',
+            'userbarInline' => true,
+            'hasOpenShift' => Auth::hasRole('admin', 'cashier') ? (bool) (new \App\Models\Shift())->findOpenByUser((int) Auth::user()['id']) : true,
             'revenue'      => $report->todayRevenue($storeId),
             'orderCount'   => $report->todayOrderCount($storeId),
             'lowStock'     => $report->lowStockProducts($storeId),
