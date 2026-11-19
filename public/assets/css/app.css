@@ -18,7 +18,8 @@
 @media (min-width: 992px) {
     .sidebar { min-height: 100vh; position: sticky; top: 0; align-self: flex-start; height: 100vh; overflow-y: auto; }
 }
-.sidebar.offcanvas-lg { --bs-offcanvas-bg: var(--c-ink); --bs-offcanvas-color: #cfe0d6; }
+/* Bootstrap ép .offcanvas-lg trong suốt (!important) ở màn hình lớn -> phải ép lại */
+.sidebar.offcanvas-lg { --bs-offcanvas-bg: var(--c-ink); --bs-offcanvas-color: #cfe0d6; background-color: var(--c-ink) !important; color: #cfe0d6; }
 .sidebar-brand { display: flex; align-items: center; padding: 1.25rem 1.25rem 1rem; }
 .brand-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--c-green); color: #fff; font-weight: 700; display: grid; place-items: center; }
 .brand-name { color: #fff; font-weight: 700; line-height: 1.15; }
