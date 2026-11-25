@@ -19,7 +19,10 @@ function url(string $path = '/'): string
 
 function asset(string $path): string
 {
-    return url('assets/' . ltrim($path, '/'));
+    $path = ltrim($path, '/');
+    $file = dirname(__DIR__) . '/public/assets/' . $path;
+    $v = is_file($file) ? '?v=' . filemtime($file) : '';
+    return url('assets/' . $path) . $v;
 }
 
 function redirect(string $path): never
