@@ -10,18 +10,18 @@ $user = Auth::user();
 // Mục có mục con là nhóm xổ xuống; đường dẫn của nhóm chỉ để đặt tên, không điều hướng.
 $menu = [
     ['/',          'speedometer2', 'Tổng quan',     ['admin', 'cashier', 'warehouse']],
+    ['#catalog',   'folder2-open', 'Danh mục',       ['admin'], [
+        ['/categories', 'Loại hàng'],
+        ['/units',      'Đơn vị tính'],
+        ['/suppliers',  'Nhà cung cấp'],
+    ]],
+    ['/products',  'tags',         'Sản phẩm',       ['admin']],
     ['/pos',       'cart3',        'Bán hàng (POS)', ['admin', 'cashier']],
     ['/orders',    'receipt',      'Hóa đơn',        ['admin', 'cashier']],
     ['/shifts',    'clock-history', 'Ca làm việc',   ['admin', 'cashier']],
     ['#warehouse', 'box-seam',     'Kho hàng',       ['admin', 'warehouse'], [
         ['/inventory', 'Tồn kho'],
         ['/receipts',  'Phiếu nhập'],
-    ]],
-    ['/products',  'tags',         'Sản phẩm',       ['admin']],
-    ['#catalog',   'folder2-open', 'Danh mục',       ['admin'], [
-        ['/categories', 'Loại hàng'],
-        ['/units',      'Đơn vị tính'],
-        ['/suppliers',  'Nhà cung cấp'],
     ]],
     ['/users',     'people',       'Nhân viên',      ['admin']],
     ['/reports',   'bar-chart',    'Báo cáo',        ['admin']],
