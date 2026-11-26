@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 use App\Core\App;
 use App\Core\Auth;
 use App\Core\Session;
@@ -43,7 +43,7 @@ $menu = [
         <div class="sidebar-brand">
             <a href="<?= url('/') ?>" class="d-flex align-items-center gap-2 text-decoration-none">
                 <span class="brand-mark"><?= e(mb_strtoupper(mb_substr(App::config('app.name'), 0, 1))) ?></span>
-                <span class="brand-name">Quản lý<br>cửa hàng</span>
+                <span class="brand-name">Quản lý cửa hàng</span>
             </a>
             <button type="button" class="btn-close btn-close-white d-lg-none ms-auto" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Đóng"></button>
         </div>
@@ -106,3 +106,4 @@ $menu = [
 <script src="<?= asset('js/app.js') ?>"></script>
 </body>
 </html>
+

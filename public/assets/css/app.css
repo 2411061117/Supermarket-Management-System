@@ -1,4 +1,4 @@
-.login-card { max-width: 400px; }
+﻿.login-card { max-width: 400px; }
 
 /* ===== Giao diện chung ===== */
 :root {
@@ -22,7 +22,7 @@
 .sidebar.offcanvas-lg { --bs-offcanvas-bg: var(--c-ink); --bs-offcanvas-color: #cfe0d6; background-color: var(--c-ink) !important; color: #cfe0d6; }
 .sidebar-brand { display: flex; align-items: center; padding: 1.25rem 1.25rem 1rem; }
 .brand-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--c-green); color: #fff; font-weight: 700; display: grid; place-items: center; }
-.brand-name { color: #fff; font-weight: 700; line-height: 1.15; }
+.brand-name { color: #fff; font-weight: 700; line-height: 1.15; white-space: nowrap; }
 .sidebar-nav { padding: .5rem .8rem 1rem; gap: .15rem; }
 .sidebar-nav .nav-link { display: flex; align-items: center; gap: .85rem; color: #cfe0d6; padding: .6rem .8rem; border-radius: 9px; font-size: .95rem; }
 .sidebar-nav .nav-link:hover { background: rgba(255,255,255,.07); color: #fff; }
@@ -82,3 +82,4 @@
     body { background: #fff !important; }
     .receipt { margin: 0; padding: 0; max-width: none; }
 }
+
